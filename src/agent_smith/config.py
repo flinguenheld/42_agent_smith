@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import os
-from enum import Enum
 from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 from termcolor import colored
 
+from agent_smith.data import PROVIDERS, LLMName
 from agent_smith.display import print_info
 
 
@@ -14,21 +14,12 @@ class ConfigError(Exception):
     pass
 
 
-class LLMName(Enum):
-    MISTRAL = "MISTRAL"
-
-
-# API domain of each provider: add one line per new provider
-PROVIDERS: dict[str, LLMName] = {
-    "api.mistral.ai": LLMName.MISTRAL,
-}
-
-
 class Config:
     """Find the provider from its URL and load its API keys from .env."""
 
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str, model_name: str) -> None:
         self.url: str = url
+        self.model_name: str = model_name
 
         load_dotenv()
         self.name: LLMName = self._find_provider()

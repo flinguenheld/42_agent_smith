@@ -18,6 +18,29 @@ means sending an HTTP request to an LLM provider and getting its answer back.
 
 ---
 
+### EAFP / LBYL
+
+- **EAFP**, *Easier to Ask Forgiveness than Permission*: try the action, catch the error
+  (`try`/`except`). The usual Python style.
+- **LBYL**, *Look Before You Leap*: check every condition with `if` first.
+
+Keep the `try` block small, so it doesn't hide unrelated bugs.
+
+---
+
+### httpx
+
+A Python library that sends HTTP requests, such as a POST to an [LLM](#llm)
+[API](#api), and reads the response. The standard library has `urllib.request` for
+the same job, but its code is longer and harder to read.
+
+```python
+response = httpx.post(url, headers={"Authorization": f"Bearer {key}"}, json=body)
+data = response.json()
+```
+
+---
+
 ### LLM
 
 **Large Language Model.** An AI that takes text in and gives text out, such as GPT,
@@ -61,6 +84,7 @@ src/                   ← just a box, not imported
 ```
 
 **Why it matters:**
+
 - **Clean imports:** code is imported by package name, not by file path, so it works
   whatever folder you run it from.
 - **`python -m` works:** the moulinette runs `uv run python -m agent_mbpp`. That works
