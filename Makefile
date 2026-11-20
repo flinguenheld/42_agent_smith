@@ -11,7 +11,8 @@ install_goinfre:
 	uv sync
 
 run:
-	uv run 42-agent-smith
+	# uv run 42-agent-smith
+	uv run python -m agent_smith
 
 nvim:
 	uv run nvim .
