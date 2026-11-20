@@ -8,11 +8,7 @@ authors = [
     { name = "flinguen" }
 ]
 requires-python = ">=3.10,<3.11"
-dependencies = [
-    "flake8>=7.4.1",
-    "mypy>=2.4.1",
-    "ruff>=0.17.5",
-]
+dependencies = []
 
 [project.scripts]
 42-agent-smith = "agent_smith:main"
@@ -29,3 +25,11 @@ required-version = ">=0.13.9"
 
 [tool.ruff]
 line-length = 79
+
+[dependency-groups]
+dev = [
+    "flake8>=7.4.1",
+    "mypy>=2.4.1",
+    "ruff>=0.17.6",
+    "ty>=0.0.107",
+]

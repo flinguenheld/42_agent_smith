@@ -13,6 +13,9 @@ install_goinfre:
 run:
 	uv run 42-agent-smith
 
+nvim:
+	uv run nvim .
+
 clean:
 	find . -name .venv -prune -o -type d -name __pycache__ -exec rm -rf {} +
 	rm -rf .mypy_cache .ruff_cache
@@ -24,4 +27,4 @@ lint:
 	uv run flake8 src
 	uv run mypy src
 
-.PHONY: install install_goinfre run clean fclean lint
+.PHONY: install install_goinfre run nvim clean fclean lint

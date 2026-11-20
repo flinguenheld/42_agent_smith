@@ -1,6 +1,7 @@
 *This project has been created as part of the 42 curriculum by [rapoggi](https://github.com/cali-pso), [flinguen](https://www.linguenheld.net/)*
 
 ## 42_agent_smith
+
 Autonomous reasoning, code generation, and execution.
 
 ### Usage
@@ -8,6 +9,7 @@ Autonomous reasoning, code generation, and execution.
 #### Requirements
 
 - [uv](https://docs.astral.sh/uv/) — the **standalone** install:
+
 ```sh
     curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
@@ -22,7 +24,7 @@ cd 42_agent_smith
 Check the environment:
 
 ```sh
-uv run python --version # → Python 3.10.0
+uv run python --version # → Python 3.10
 make run                # → Hello from 42-agent-smith!
 ```
 
