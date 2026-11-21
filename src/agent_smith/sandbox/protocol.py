@@ -92,15 +92,12 @@ _to_parent: TypeAdapter = TypeAdapter(ToParent)
 _to_child: TypeAdapter = TypeAdapter(ToChild)
 
 
-def send(stream: IO[bytes], msg: _Msg) -> Any | None:
-    stream.write(msg.model_dump_json().encode("utf-8") + b"\n")
-    stream.flush()
+def encode(msg: _Msg) -> bytes:
+    """One message -> one JSON line (bytes, newline included)."""
+    return msg.model_dump_json().encode("utf-8") + b"\n"
 
 
-def _receive(stream: IO[bytes], adapter: TypeAdapter) -> Any | None:
-    line = stream.readline(MAX_LINE_BYTES + 1)
-    if not line:
-        return None
+def _decode(line: bytes, adapter: TypeAdapter) -> Any:
     if len(line) > MAX_LINE_BYTES or not line.endswith(b"\n"):
         raise ProtocolError("message too long or not newline-terminated")
     try:
@@ -109,11 +106,19 @@ def _receive(stream: IO[bytes], adapter: TypeAdapter) -> Any | None:
         raise ProtocolError(f"invalid message: {exc}") from exc
 
 
-def receive_from_child(stream: IO[bytes]) -> Any | None:
-    """Parent side. Returns a ToParent message, or None on EOF"""
-    return _receive(stream, _to_parent)
+def decode_from_child(line: bytes) -> Any:
+    """Parent side: bytes of one line -> a ToParent message."""
+    return _decode(line, _to_parent)
+
+
+def send(stream: IO[bytes], msg: _Msg) -> Any | None:
+    stream.write(encode(msg))
+    stream.flush()
 
 
 def receive_from_parent(stream: IO[bytes]) -> Any | None:
-    """Child side. Returns a ToChild message, or None on EOF"""
-    return _receive(stream, _to_child)
+    """Child side (blocking). A ToChild message, or None on EOF."""
+    line = stream.readline(MAX_LINE_BYTES + 1)
+    if not line:
+        return None  # EOF: the parent is gone
+    return _decode(line, _to_child)
