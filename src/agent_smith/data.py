@@ -16,3 +16,4 @@ PROVIDERS: dict[str, LLMName] = {
 
 # -----------------------------------
 TIMEOUT = 60.0
+STOP_SEQUENCES = ["<end_code>", "Observation:"]

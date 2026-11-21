@@ -15,7 +15,11 @@ if __name__ == "__main__":
         print(config)
 
         client = LLMClient(config)
-        answer = client.ask("How are you?")
+        messages = [
+            {"role": "system", "content": "You are a Python expert."},
+            {"role": "user", "content": "How are you?"},
+        ]
+        answer = client.ask(messages)
 
         print(answer)
 

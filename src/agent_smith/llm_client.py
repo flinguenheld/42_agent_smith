@@ -5,7 +5,7 @@ import httpx
 from httpx import Response
 
 from agent_smith.config import Config
-from agent_smith.data import TIMEOUT
+from agent_smith.data import STOP_SEQUENCES, TIMEOUT
 
 
 class LLMClientError(Exception):
@@ -22,7 +22,7 @@ class LLMResponse:
 class LLMClient:
     """Send messages to an OpenAI-compatible LLM API and return its answer.
 
-    - Use ask() to return an LLMResponse
+    - Use ask(messages) to return an LLMResponse
     - Any failure (network, HTTP status, answer format) raises LLMClientError.
     """
 
@@ -30,8 +30,13 @@ class LLMClient:
         self.config = config
 
     # ---------------------------------------------------------------- ASK ----
-    def ask(self, message: str) -> LLMResponse:
-        body = self._new_body(message)
+    def ask(self, messages: list[dict[str, str]]) -> LLMResponse:
+        """Send the whole conversation and return the LLM's next answer.
+
+        messages: [{"role": "system" | "user" | "assistant", "content": ...}]
+        The client keeps no history: the caller sends the full list each time.
+        """
+        body = self._new_body(messages)
         response = self._send(body)
         data = self._read_json(response)
 
@@ -42,13 +47,11 @@ class LLMClient:
         )
 
     # -------------------------------------------------------------- BUILD ----
-    def _new_body(self, message: str) -> dict:
+    def _new_body(self, messages: list[dict[str, str]]) -> dict:
         return {
             "model": self.config.model_name,
-            "messages": [
-                {"role": "system", "content": "You are a Python expert."},
-                {"role": "user", "content": message},
-            ],
+            "messages": messages,
+            "stop": STOP_SEQUENCES,
         }
 
     # --------------------------------------------------------------- SEND ----
