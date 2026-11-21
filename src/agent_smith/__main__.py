@@ -1,8 +1,9 @@
 import sys
 
 from agent_smith.config import Config, ConfigError
-from agent_smith.display import print_error
+from agent_smith.display import print_error, print_info
 from agent_smith.llm_client import LLMClient, LLMClientError
+from agent_smith.sandbox import Sandbox
 
 if __name__ == "__main__":
     try:
@@ -20,8 +21,12 @@ if __name__ == "__main__":
             {"role": "user", "content": "How are you?"},
         ]
         answer = client.ask(messages)
-
         print(answer)
+
+        with Sandbox(None, None) as sandbox:
+            blah = sandbox.run("print('hello')")
+            # print_info(blah.to_observation())
+            print(blah)
 
     except ConfigError as err:
         print_error("CONFIG", str(err))

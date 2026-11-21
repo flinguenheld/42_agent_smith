@@ -59,6 +59,7 @@ class LLMClient:
         """POST the body to the provider and return a successful response."""
 
         try:
+            # Check httpx stream to see if it's possible to stop before
             response = httpx.post(
                 self.config.url,
                 headers={"Authorization": f"Bearer {self.config.keys[0]}"},
