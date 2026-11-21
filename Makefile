@@ -19,7 +19,7 @@ nvim:
 
 clean:
 	find . -name .venv -prune -o -type d -name __pycache__ -exec rm -rf {} +
-	rm -rf .mypy_cache .ruff_cache
+	rm -rf .mypy_cache .ruff_cache .pytest_cache
 
 fclean: clean
 	rm -rf $(VENV_DIR) .venv
@@ -28,4 +28,7 @@ lint:
 	uv run flake8 src
 	uv run mypy src
 
-.PHONY: install install_goinfre run nvim clean fclean lint
+test:
+	uv run pytest -v
+
+.PHONY: install install_goinfre run nvim clean fclean lint test
