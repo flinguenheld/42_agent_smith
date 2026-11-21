@@ -2,6 +2,18 @@ from dataclasses import dataclass
 from enum import Enum
 
 
+def truncate(text: str, limit: int) -> tuple[str, bool]:
+    """Keep the start and the end of text; return (text, was_truncated)."""
+    if len(text) <= limit:
+        return text, False
+    head = limit // 2
+    tail = limit - head
+    cut = len(text) - limit
+    return (
+        f"{text[:head]}\n...[{cut} characters truncated]...\n{text[-tail:]}"
+    ), True
+
+
 class Status(str, Enum):
     OK = "ok"
     ERROR = "error"

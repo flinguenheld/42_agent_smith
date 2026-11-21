@@ -6,6 +6,9 @@ requires-python = "==3.10.*"
 name = "42-agent-smith"
 version = "0.1.0"
 source = { editable = "." }
+dependencies = [
+    { name = "pydantic" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -16,6 +19,7 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "pydantic", specifier = ">=2.14.4" }]
 
 [package.metadata.requires-dev]
 dev = [
@@ -23,6 +27,15 @@ dev = [
     { name = "mypy", specifier = ">=2.4.1" },
     { name = "ruff", specifier = ">=0.17.6" },
     { name = "ty", specifier = ">=0.0.107" },
+]
+
+[[package]]
+name = "annotated-types"
+version = "0.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/56/a8120250d128bed162cd73c76d45f6ef9991f3e068f62a8ee060afa3104a/annotated_types-0.8.0.tar.gz", hash = "sha256:13b2beaad985e05e2d6407ee4c4f35590b11f8d693a258a561055cac8f64cab7", size = 15893, upload-time = "2026-07-23T20:16:13.995Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl", hash = "sha256:f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0", size = 13427, upload-time = "2026-07-23T20:16:12.938Z" },
 ]
 
 [[package]]
@@ -168,6 +181,46 @@ wheels = [
 ]
 
 [[package]]
+name = "pydantic"
+version = "2.14.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "annotated-types" },
+    { name = "pydantic-core" },
+    { name = "typing-extensions" },
+    { name = "typing-inspection" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8e/25/3ec212432a6031b65f043eaca9c820ddf87c0d0aa330023e64f79fcb5db6/pydantic-2.14.4.tar.gz", hash = "sha256:7c19f1d46f8accf55a4617a6116e1ade64840870f397b846a2c53fb9019414ba", size = 927354, upload-time = "2026-11-19T12:57:39.767Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8a/8c/824a686c4ba815ddb0722f9e66272088bccd4e1ae1d2f7015375e4a4fc7f/pydantic-2.14.4-py3-none-any.whl", hash = "sha256:653a2ad9f6d8858529c77c72717d0ea991d6c6837fe683246b2f4b2bbfc3fadc", size = 494865, upload-time = "2026-11-19T12:57:37.688Z" },
+]
+
+[[package]]
+name = "pydantic-core"
+version = "2.50.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fb/63/0ceb815a7762576027ce388544c573d440574f95afb1302a2496b96db548/pydantic_core-2.50.5.tar.gz", hash = "sha256:1e740886083ff95530d694e6a3f09ed914bcf92a496d16acd307c6c3484fc36d", size = 523285, upload-time = "2026-11-19T12:56:38.067Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/87/0b/92692ed14443ef68fe3b642cf08585781f64cf5b13ab028c27acd9f95fb6/pydantic_core-2.50.5-cp310-cp310-macosx_10_12_x86_64.whl", hash = "sha256:302517f9f5589e07ead02d38fbb443947a211461b39b18f46948b20941fa8d98", size = 2175347, upload-time = "2026-11-19T12:53:19.891Z" },
+    { url = "https://files.pythonhosted.org/packages/31/72/8991aa49af2f39150dbc5b4b1f5bd11e14f2462687122f9f98a5e5c1c048/pydantic_core-2.50.5-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:55e0d60384a9b14641749d2ba6721f82409248288f066b95d555c6dd484273d2", size = 2139207, upload-time = "2026-11-19T12:53:22.869Z" },
+    { url = "https://files.pythonhosted.org/packages/71/4a/d8d914acde92a16e8f06e4f88e7b38e1aa859ee59d890233ce3fdd7d2607/pydantic_core-2.50.5-cp310-cp310-manylinux1_i686.manylinux_2_5_i686.whl", hash = "sha256:93a10c0b967c0dc6c2253d3a82b9117d2a841b8e344c637edc0a14220852b115", size = 2289328, upload-time = "2026-11-19T12:53:24.315Z" },
+    { url = "https://files.pythonhosted.org/packages/f9/ad/9a170d7272981e94a6e38008913d7807561a1a4ca7df3b65dbbdcd8fc6d0/pydantic_core-2.50.5-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:252ce30d79b47954cc3a49f8a0d812ac24a356627391fcec90a68733c755707e", size = 2137155, upload-time = "2026-11-19T12:53:25.813Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/22/87e8e4d58923fbdda84f075579f7642071b2afe3d731ca6863694529ef3d/pydantic_core-2.50.5-cp310-cp310-manylinux2014_armv7l.manylinux_2_17_armv7l.whl", hash = "sha256:5da0e7da9d7cdc39df85d1b927b77d40218cf40acbfc523048c95ce44d33abb9", size = 2218699, upload-time = "2026-11-19T12:53:27.096Z" },
+    { url = "https://files.pythonhosted.org/packages/4e/80/676d937ef0cbc155b2aef5383d691b0da9ab724e8088d5f8c9e805346135/pydantic_core-2.50.5-cp310-cp310-manylinux2014_ppc64le.manylinux_2_17_ppc64le.whl", hash = "sha256:bb103c150e1a0f1b8b2710a66ce1f741c7922b22ef07a290aea0e6cf702d8bbf", size = 2411285, upload-time = "2026-11-19T12:53:28.356Z" },
+    { url = "https://files.pythonhosted.org/packages/fc/1f/481e33248ea6ebace495832a4633dcdfdff0091d1f2bdff28e84b4944c62/pydantic_core-2.50.5-cp310-cp310-manylinux2014_s390x.manylinux_2_17_s390x.whl", hash = "sha256:6e01a2033691ea2cbd91e499d6b6573f446dc926ccdfc670ed576991cef85cdb", size = 2460765, upload-time = "2026-11-19T12:53:29.684Z" },
+    { url = "https://files.pythonhosted.org/packages/85/fe/f9dc00de87940cfa8db26e7a530be0b9b8e9203d647dd1eaf66ac56be9f4/pydantic_core-2.50.5-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:92c0ebab606f982730aaaa741a30cd5e0f68dc7c005a5baa9b332fc182232c61", size = 2260958, upload-time = "2026-11-19T12:53:31.114Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/dd/e421920b59be31125df5d575ff2e6e2eba1d98a4db6a3bbf4c47b4d7c2ab/pydantic_core-2.50.5-cp310-cp310-manylinux_2_31_riscv64.whl", hash = "sha256:706c75cd9f8bd1798367f463ea81df52eff5fb2e4c4ef83997dd4ae538adc109", size = 2287149, upload-time = "2026-11-19T12:53:32.556Z" },
+    { url = "https://files.pythonhosted.org/packages/fe/f4/311048aaab77535a557a2c114c28b87eb85d5652e6ac41a182e956f9f5a8/pydantic_core-2.50.5-cp310-cp310-musllinux_1_1_aarch64.whl", hash = "sha256:d84b427c6badf48adc2586be1dc5c8677fc2f22a09da50e5d3f342d3daf3b2b4", size = 2325782, upload-time = "2026-11-19T12:53:33.959Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/4b/90208a37bda68dd43dd5ba8067ed343321dfb5354e9dee6a7c022fb28734/pydantic_core-2.50.5-cp310-cp310-musllinux_1_1_armv7l.whl", hash = "sha256:5eafde2cd1d97b7f60efc423d8504b22defd9d2fb9c4a358ffd1230e5fe65311", size = 2494898, upload-time = "2026-11-19T12:53:35.377Z" },
+    { url = "https://files.pythonhosted.org/packages/42/5c/a900e98d86ff322205ab26b3fb1cb381733f919334742bafc8fea6214ff3/pydantic_core-2.50.5-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:dc5717ed8981efdbbafc15a2533a690703cf80e96b886a158c61c9ec9bafcc28", size = 2501646, upload-time = "2026-11-19T12:53:36.892Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/dd/71c8c43756459d6de9e46d77c35d8b282edff47d610b92a115f1ad83393c/pydantic_core-2.50.5-cp310-cp310-win32.whl", hash = "sha256:15124b48e0acb6d24664690e052d50be51901286886bc124090960f1df869f30", size = 2138817, upload-time = "2026-11-19T12:53:38.152Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/c1/fa698f0c7be1c1381df371371f3201563ae1778ea1d0a4fba3e54516b36c/pydantic_core-2.50.5-cp310-cp310-win_amd64.whl", hash = "sha256:b7e6a76b77513cd633a08addfda8409623ad884a4d91ee3664fb05cf094b2c35", size = 2275128, upload-time = "2026-11-19T12:53:39.361Z" },
+]
+
+[[package]]
 name = "pyflakes"
 version = "4.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -242,4 +295,16 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f6/cc/6253133b5bb138fc3306cebfbda2c520f545d36b5be2c7255cc528bb45d6/typing_extensions-4.16.0.tar.gz", hash = "sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5", size = 113555, upload-time = "2026-07-02T08:40:05.92Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl", hash = "sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8", size = 45571, upload-time = "2026-07-02T08:40:04.659Z" },
+]
+
+[[package]]
+name = "typing-inspection"
+version = "0.4.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ff/50/0195198eb1d75bab716bb0a813abea4cc394bfa17a92a189f021a34859af/typing_inspection-0.4.5.tar.gz", hash = "sha256:7f16c411e7930dc79596d42ab44672a3fe5f60eb34b781a1647e7872363120c7", size = 81194, upload-time = "2026-11-04T14:13:23.774Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/de/0c/ea2544850a7c135e15033a5c7a8e7211136184b7ae63e2239d557c2b3019/typing_inspection-0.4.5-py3-none-any.whl", hash = "sha256:bc210535442b39e1bf2805e0c7a17dfd6a4ace760c84c7f7d16245d23a6b1c39", size = 14874, upload-time = "2026-11-04T14:13:22.616Z" },
 ]

@@ -136,7 +136,7 @@ class Sandbox:
     def _start(self) -> None:
         self._errlog = tempfile.TemporaryFile()
 
-        self._proc - subprocess.Popen(
+        self._proc = subprocess.Popen(
             [
                 sys.executable,
                 "-I",
@@ -146,7 +146,7 @@ class Sandbox:
                 str(os.getpid()),
             ],
             stdin=subprocess.PIPE,
-            stdout=subprocess.PIIPE,
+            stdout=subprocess.PIPE,
             stderr=self._errlog,
             cwd=self._cwd(),
             env={"PATH": os.defpath, "LC_ALL": "C.UTF-8"},

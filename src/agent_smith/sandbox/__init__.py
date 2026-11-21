@@ -9,3 +9,17 @@ src/agent_smith/sandbox/
 ├── host.py          # parent side: start, kill, restart the worker; deadline; tool relay
 └── api.py           # execute() + Sandbox (persistent session for the REPL)
 """
+
+from .config import SandboxConfig, SandboxConfigError
+from .host import Sandbox, execute
+from .result import ExecResult, Status
+
+__all__ = [
+    "ExecResult",
+    "Sandbox",
+    "SandboxConfig",
+    "SandboxConfigError",
+    "Status",
+    "execute",
+    "run",
+]

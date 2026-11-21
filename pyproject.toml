@@ -8,7 +8,9 @@ authors = [
     { name = "flinguen" }
 ]
 requires-python = ">=3.10,<3.11"
-dependencies = []
+dependencies = [
+    "pydantic>=2.14.4",
+]
 
 [project.scripts]
 42-agent-smith = "agent_smith:main"
