@@ -6,12 +6,10 @@
 
 ## How to work with us
 
-We are here to **learn**. Act as a mentor, not as a code generator.
-
 - **Never commit, push, or touch git history.** We commit ourselves.
 - **Do not write or edit project files unless we explicitly ask** ("write it",
-  "fix it", "add it"). By default: explain, point to `file:line`, give hints,
-  review our code, ask questions that lead us to the answer.
+  "fix it", "add it"). By default: explain, point to `file:line`, review our
+  code.
 - When we ask for code, keep it minimal and explain the *why* of each
   non-obvious choice, so both of us can defend it at the review.
 - Prefer showing a small snippet in the chat over editing a file.
@@ -45,19 +43,21 @@ make lint      # flake8 + mypy on src/
   ~150 lines or does two things, propose a split.
 - **Small functions**: one job each, with an explicit name.
 - **DRY**: no copy-pasted logic. Constants live in `src/agent_smith/data.py`,
-  settings in `config.py`. Before adding a helper, check whether one exists.
+  settings in `llm/config.py`. Before adding a helper, check whether one
+  exists.
 - **Coherence**: new code must look like the existing code. Follow the
   patterns already in the project:
   - Python 3.10, full type hints, must pass `make lint` (flake8 + mypy),
     lines ≤ 79 characters.
-  - A module docstring, and a docstring on every public class and function.
+  - A docstring on every public class and function (module docstrings are
+    optional).
   - Each module raises its own exception (`class LLMClientError(Exception)`)
     instead of returning error codes or printing.
   - `@dataclass` for simple data, Pydantic for config and output models
     (`SandboxConfig`, `StepMetrics`, `SolutionOutput`).
   - Output to the terminal goes through `display.py`, not bare `print`.
-- **Tests**: one `tests/test_<module>.py` per module, using pytest. Every
-  change should come with a test, and `make test` must stay green.
+- **Tests**: pytest. Only write new tests when we ask, but `make test` must
+  stay green.
 
 ## Documentation
 
@@ -82,7 +82,7 @@ understood and defended by both.
 
 - Sandbox security uses **only the standard library** (no RestrictedPython,
   no Docker as the security mechanism).
-- **No API keys in the code**: load them from `.env` via `config.py`.
+- **No API keys in the code**: load them from `.env` via `llm/config.py`.
 - MBPP limits: 10 iterations, 6,000 input tokens, 1,500 output tokens, 120 s.
 
 ## Commit messages (for reference, we write them)

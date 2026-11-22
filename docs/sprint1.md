@@ -146,20 +146,24 @@ That result goes back into the conversation, and the loop starts again at Step 1
  agent_mbpp (CLI)
    │  --task-file  --output  --model-name  --provider-url
    ▼
- ┌────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────────┐
- │ prompt.py  │   │ llm_client.py│   │  extract.py  │   │    agent.py      │
- │ system     │   │ ask(messages)│   │ extract_code │   │ the loop that    │
- │ prompt     │   │ → text,tokens│   │ (text)→code  │   │ ties it together │
- └────────────┘   └──────────────┘   └──────────────┘   └────────┬─────────┘
-                                                                 │
-                                                       sandbox.execute(code)
-                                                         (stub → D2 later)
+ ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐
+ │ agent/       │  │ llm/         │  │ agent/       │  │ agent/           │
+ │ prompt.py    │  │ client.py    │  │ extract.py   │  │ agent.py         │
+ │ system       │  │ ask(messages)│  │ extract_code │  │ the loop that    │
+ │ prompt       │  │ → text,tokens│  │ (text)→code  │  │ ties it together │
+ └──────────────┘  └──────────────┘  └──────────────┘  └────────┬─────────┘
+                                                                │
+                                          budget.py · deadline.py · report.py
+                                                                │
+                                                       sandbox.run(code)
+                                                       (stub → D2 later)
 ```
 
-- [ ] `llm_client.py`: call an OpenAI-compatible API and return the text and token counts
-- [ ] `prompt.py`: a short system prompt plus one example
-- [ ] `extract.py`: pull out the ```` ```python ```` block and handle the "no code" case
-- [ ] `agent.py`: the loop with `max_iterations`, the token budget and `final_answer`
+- [x] `llm/client.py`: call an OpenAI-compatible API and return the text and token counts
+- [x] `agent/prompt.py`: a short system prompt plus one example
+- [x] `agent/extract.py`: pull out the ```` ```python ```` block and handle the "no code" case
+- [x] `agent/agent.py`: the loop with `max_iterations`, the token budget
+  (`budget.py`), the 120 s timeout (`deadline.py`) and `final_answer`
 - [ ] Write `solution.json` (`SolutionOutput` + `StepMetrics`)
 - [ ] Agree on the `sandbox.execute(code)` interface with D2
 

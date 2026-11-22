@@ -80,7 +80,9 @@ src/                   ← just a box, not imported
 └── agent_smith/       ← the package: import agent_smith
     ├── __init__.py    ← makes the folder a package
     ├── __main__.py    ← runs with: uv run python -m agent_smith
-    └── llm_client.py  ← a module: from agent_smith.llm_client import LlmClient
+    └── llm/           ← a sub-package: import agent_smith.llm
+        ├── __init__.py
+        └── client.py  ← a module: from agent_smith.llm.client import LLMClient
 ```
 
 **Why it matters:**
