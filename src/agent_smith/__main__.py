@@ -2,7 +2,7 @@ import sys
 
 from agent_smith.agent import Agent
 from agent_smith.config import Config, ConfigError
-from agent_smith.display import print_error, print_info
+from agent_smith.display import print_debug, print_error, print_info
 from agent_smith.llm_client import LLMClient, LLMClientError
 from agent_smith.models import MBPPTaskInput
 from agent_smith.prompt import build_task_message
@@ -26,15 +26,15 @@ if __name__ == "__main__":
             "gemini-3.5-flash-lite",
             # "gemini-3.5-flash",
         )
-        print(config)
+        print_debug(str(config), "Config")
 
         with Sandbox(None, None) as sandbox:
             agent = Agent(LLMClient(config), sandbox, task)
             prompt = build_task_message(task)
-            print(prompt)
+            print_debug(prompt, "Initial prompt")
 
-            aaa = agent.solve()
-            print(aaa)
+            solution = agent.solve()
+            print_debug(solution, "Solution")
 
     except ConfigError as err:
         print_error("CONFIG", str(err))
@@ -43,4 +43,4 @@ if __name__ == "__main__":
     except LLMClientError as err:
         print_error("API", str(err))
 
-    print("Hello Flo!")
+    print_debug("---- end ----")

@@ -29,6 +29,8 @@ PROVIDERS: dict[str, Provider] = {
 }
 
 # -----------------------------------
+DEBUG = True
+
 API_TIMEOUT = 60.0
 STOP_SEQUENCES = ["<end_code>", "Observation:"]
 
