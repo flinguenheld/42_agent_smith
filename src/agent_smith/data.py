@@ -17,3 +17,6 @@ PROVIDERS: dict[str, LLMName] = {
 # -----------------------------------
 TIMEOUT = 60.0
 STOP_SEQUENCES = ["<end_code>", "Observation:"]
+
+# MBPP limits (subject VI.1)
+MAX_ITERATIONS = 10
