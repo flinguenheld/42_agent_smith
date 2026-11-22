@@ -1,3 +1,4 @@
+from agent_smith.budget import TokenBudget
 from agent_smith.data import MAX_ITERATIONS
 from agent_smith.extract import extract_code
 from agent_smith.llm_client import LLMClient
@@ -28,15 +29,19 @@ class Agent:
         self.task = task
         self.max_iterations = max_iterations
         self.messages: list[dict[str, str]] = []
+        self.budget = TokenBudget()
 
     def solve(self) -> str | None:
-        """Run rounds until final_answer() or max_iterations."""
+        """Run rounds until final_answer(), max_iterations or no budget."""
 
         self.messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": build_task_message(self.task)},
         ]
+        self.budget = TokenBudget()
         for _ in range(self.max_iterations):
+            if not self.budget.has_room:
+                break
             answer = self._round()
             if answer is not None:
                 return answer
@@ -45,7 +50,12 @@ class Agent:
     def _round(self) -> str | None:
         """Ask, extract, run. Return the final answer, or None."""
 
-        reply = self.client.ask(self.messages).text
+        response = self.client.ask(
+            self.messages, self.budget.max_tokens_for_next_call
+        )
+        self.budget.add(response.input_tokens, response.output_tokens)
+
+        reply = response.text
         self._add("assistant", reply)
 
         code = extract_code(reply)

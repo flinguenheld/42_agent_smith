@@ -34,7 +34,7 @@ class LLMResponse:
 class LLMClient:
     """Send messages to an OpenAI-compatible LLM API and return its answer.
 
-    - Use ask(messages) to return an LLMResponse
+    - Use ask(messages, max_tokens) to return an LLMResponse
     - Any failure (network, HTTP status, answer format) raises LLMClientError.
     """
 
@@ -42,13 +42,16 @@ class LLMClient:
         self.config = config
 
     # ---------------------------------------------------------------- ASK ----
-    def ask(self, messages: list[dict[str, str]]) -> LLMResponse:
+    def ask(
+        self, messages: list[dict[str, str]], max_tokens: int
+    ) -> LLMResponse:
         """Send the whole conversation and return the LLM's next answer.
 
         messages: [{"role": "system" | "user" | "assistant", "content": ...}]
+        max_tokens: the server stops the answer after this many tokens.
         The client keeps no history: the caller sends the full list each time.
         """
-        body = self._new_body(messages)
+        body = self._new_body(messages, max_tokens)
         response, retries = self._send_with_retries(body)
         data = self._read_json(response)
 
@@ -60,16 +63,20 @@ class LLMClient:
         )
 
     # -------------------------------------------------------------- BUILD ----
-    def _new_body(self, messages: list[dict[str, str]]) -> dict:
+    def _new_body(
+        self, messages: list[dict[str, str]], max_tokens: int
+    ) -> dict:
         return {
             "model": self.config.model_name,
             "messages": messages,
             "stop": STOP_SEQUENCES,
+            "max_tokens": max_tokens,
         }
 
     # --------------------------------------------------------------- SEND ----
     def _send_with_retries(self, body: dict) -> tuple[Response, int]:
         """Send the body, retrying temporary failures.
+
         Return (response, retries). Raise LLMClientError if it still fails.
         """
 

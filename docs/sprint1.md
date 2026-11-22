@@ -156,9 +156,9 @@ That result goes back into the conversation, and the loop starts again at Step 1
                                                          (stub → D2 later)
 ```
 
-- [ ] `llm_client.py`: call an OpenAI-compatible API and return the text and token counts
-- [ ] `prompt.py`: a short system prompt plus one example
-- [ ] `extract.py`: pull out the ```` ```python ```` block and handle the "no code" case
+- [x] `llm_client.py`: call an OpenAI-compatible API and return the text and token counts
+- [x] `prompt.py`: a short system prompt plus one example
+- [x] `extract.py`: pull out the ```` ```python ```` block and handle the "no code" case
 - [ ] `agent.py`: the loop with `max_iterations`, the token budget and `final_answer`
 - [ ] Write `solution.json` (`SolutionOutput` + `StepMetrics`)
 - [ ] Agree on the `sandbox.execute(code)` interface with D2

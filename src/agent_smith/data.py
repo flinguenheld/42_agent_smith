@@ -41,3 +41,7 @@ STOP_SEQUENCES = ["<end_code>", "Observation:"]
 
 # MBPP limits --
 MAX_ITERATIONS = 10
+MAX_INPUT_TOKENS = 6_000  # cumulative over the whole task
+MAX_OUTPUT_TOKENS = 1_500  # cumulative over the whole task
+MAX_TOKENS_PER_CALL = 500  # so one reply can't use the whole budget
+TIMEOUT_SECONDS = 120.0
