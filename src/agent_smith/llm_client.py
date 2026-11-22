@@ -28,7 +28,8 @@ class LLMResponse:
     text: str
     input_tokens: int
     output_tokens: int
-    retries: int = 0
+    retries: int = 0  # failed attempts before this answer (0 = first try)
+    request_time_ms: float = 0.0  # wall-clock time, retries included
 
 
 class LLMClient:
@@ -52,7 +53,9 @@ class LLMClient:
         The client keeps no history: the caller sends the full list each time.
         """
         body = self._new_body(messages, max_tokens)
+        start = time.perf_counter()
         response, retries = self._send_with_retries(body)
+        request_time_ms = (time.perf_counter() - start) * 1000
         data = self._read_json(response)
 
         return LLMResponse(
@@ -60,6 +63,7 @@ class LLMClient:
             input_tokens=self._extract_usage(data, "prompt_tokens"),
             output_tokens=self._extract_usage(data, "completion_tokens"),
             retries=retries,
+            request_time_ms=request_time_ms,
         )
 
     # -------------------------------------------------------------- BUILD ----

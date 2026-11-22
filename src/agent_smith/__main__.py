@@ -34,7 +34,7 @@ if __name__ == "__main__":
             print_debug(prompt, "Initial prompt")
 
             solution = agent.solve()
-            print_debug(solution, "Solution")
+            print_debug(str(solution), "Solution")
 
     except ConfigError as err:
         print_error("CONFIG", str(err))

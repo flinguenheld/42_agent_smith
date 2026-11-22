@@ -1,8 +1,10 @@
+import time
+
 from agent_smith.budget import TokenBudget
-from agent_smith.data import MAX_ITERATIONS
+from agent_smith.data import BENCHMARK, MAX_ITERATIONS
 from agent_smith.extract import extract_code
-from agent_smith.llm_client import LLMClient
-from agent_smith.models import MBPPTaskInput
+from agent_smith.llm_client import LLMClient, LLMClientError, LLMResponse
+from agent_smith.models import MBPPTaskInput, SolutionOutput, StepMetrics
 from agent_smith.prompt import (
     NO_CODE_MESSAGE,
     SYSTEM_PROMPT,
@@ -30,23 +32,41 @@ class Agent:
         self.max_iterations = max_iterations
         self.messages: list[dict[str, str]] = []
         self.budget = TokenBudget()
+        self.steps: list[StepMetrics] = []
 
-    def solve(self) -> str | None:
-        """Run rounds until final_answer(), max_iterations or no budget."""
+    # -------------------------------------------------------------- SOLVE ----
+    def solve(self) -> SolutionOutput:
+        """Run the task and return its SolutionOutput."""
 
+        start = time.perf_counter()
         self.messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": build_task_message(self.task)},
         ]
         self.budget = TokenBudget()
-        for _ in range(self.max_iterations):
-            if not self.budget.has_room:
-                break
-            answer = self._round()
-            if answer is not None:
-                return answer
-        return None
+        self.steps = []
 
+        answer, error = self._loop()
+        return self._build_output(answer, error, time.perf_counter() - start)
+
+    def _loop(self) -> tuple[str | None, str | None]:
+        """Run rounds until a final answer, a limit or an API error.
+
+        Return (final answer, error); exactly one of them is None.
+        """
+
+        try:
+            for _ in range(self.max_iterations):
+                if not self.budget.has_room:
+                    return None, "token budget exhausted"
+                answer = self._round()
+                if answer is not None:
+                    return answer, None
+        except LLMClientError as err:
+            return None, str(err)
+        return None, "max iterations reached"
+
+    # -------------------------------------------------------------- ROUND ----
     def _round(self) -> str | None:
         """Ask, extract, run. Return the final answer, or None."""
 
@@ -54,20 +74,62 @@ class Agent:
             self.messages, self.budget.max_tokens_for_next_call
         )
         self.budget.add(response.input_tokens, response.output_tokens)
+        self._add("assistant", response.text)
 
-        reply = response.text
-        self._add("assistant", reply)
-
-        code = extract_code(reply)
+        code = extract_code(response.text)
         if code is None:
             self._add("user", NO_CODE_MESSAGE)
+            self._record(response, "", "")
             return None
 
         result = self.sandbox.run(code)
-        self._add("user", "Observation: " + result.to_observation())
+        observation = result.to_observation()
+        self._add("user", "Observation: " + observation)
+        self._record(response, code, observation)
         return result.final_answer
 
     def _add(self, role: str, content: str) -> None:
         """Append one message to the conversation."""
 
         self.messages.append({"role": role, "content": content})
+
+    # ------------------------------------------------------------ METRICS ----
+    def _record(
+        self, response: LLMResponse, code: str, observation: str
+    ) -> None:
+        """Save the StepMetrics of one round ("" when nothing was run)."""
+
+        self.steps.append(
+            StepMetrics(
+                step=len(self.steps) + 1,
+                input_tokens=response.input_tokens,
+                output_tokens=response.output_tokens,
+                request_time_ms=response.request_time_ms,
+                api_url=self.client.config.url,
+                model_name=self.client.config.model_name,
+                llm_output=response.text,
+                sandbox_input=code,
+                sandbox_output=observation,
+                retries=response.retries,
+            )
+        )
+
+    def _build_output(
+        self, answer: str | None, error: str | None, seconds: float
+    ) -> SolutionOutput:
+        """Gather the steps and totals into the subject's output model."""
+
+        return SolutionOutput(
+            task_id=str(self.task.task_id),
+            benchmark=BENCHMARK,
+            success=answer is not None,
+            solution=answer or "",
+            iterations=len(self.steps),
+            total_requests=sum(s.retries + 1 for s in self.steps),
+            total_input_tokens=sum(s.input_tokens for s in self.steps),
+            total_output_tokens=sum(s.output_tokens for s in self.steps),
+            total_time_seconds=seconds,
+            steps=self.steps,
+            system_prompt=SYSTEM_PROMPT,
+            error=error,
+        )

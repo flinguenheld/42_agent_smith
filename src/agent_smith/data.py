@@ -40,6 +40,7 @@ API_RETRY_STATUS = {429, 500, 502, 503, 504}
 STOP_SEQUENCES = ["<end_code>", "Observation:"]
 
 # MBPP limits --
+BENCHMARK = "mbpp"
 MAX_ITERATIONS = 10
 MAX_INPUT_TOKENS = 6_000  # cumulative over the whole task
 MAX_OUTPUT_TOKENS = 1_500  # cumulative over the whole task
