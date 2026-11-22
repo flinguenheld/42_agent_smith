@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from dotenv import load_dotenv
 from termcolor import colored
 
-from agent_smith.data import PROVIDERS, LLMName
+from agent_smith.data import PROVIDERS, Provider
 from agent_smith.display import print_info
 
 
@@ -22,18 +22,18 @@ class Config:
         self.model_name: str = model_name
 
         load_dotenv()
-        self.name: LLMName = self._find_provider()
+        self.name: Provider = self._find_provider()
         self.keys: list[str] = self._load_keys()
 
-        print_info(f"Provider: {self.name.value} with {len(self.keys)} keys.")
+        print_info(f"Provider: {self.name.name} with {len(self.keys)} keys.")
 
-    def _find_provider(self) -> LLMName:
+    def _find_provider(self) -> Provider:
         """Look up the URL's domain in the PROVIDERS table."""
 
         domain = urlparse(self.url).hostname or ""
-        llm_name = PROVIDERS.get(domain)
-        if llm_name:
-            return llm_name
+        provider = PROVIDERS.get(domain)
+        if provider:
+            return provider
 
         raise ConfigError(f"Unknown provider for '{self.url}'")
 
@@ -65,7 +65,7 @@ class Config:
         placeholder = colored("key1,key2,...", "yellow")
         lines = [
             f"  {colored(name.value, 'cyan')}={placeholder}"
-            for name in LLMName
+            for name in Provider
         ]
         domains_title = colored("Accepted provider URLs:", attrs=["bold"])
         domains = ", ".join(colored(domain, "green") for domain in PROVIDERS)

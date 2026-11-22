@@ -3,19 +3,33 @@ from __future__ import annotations
 from enum import Enum
 
 
-class LLMName(Enum):
-    MISTRAL = "MISTRAL"
-    GEMINI = "GEMINI"
+class Provider(Enum):
+    """LLM API provider; the value is its variable name in .env."""
+
+    COHERE = "COHERE_API_KEY"
+    FIREWORKS = "FIREWORKS_API_KEY"
+    GEMINI = "GEMINI_API_KEY"
+    GROQ = "GROQ_API_KEY"
+    MISTRAL = "MISTRAL_API_KEY"
+    OPENROUTER = "OPENROUTER_API_KEY"
+    PERPLEXITY = "PERPLEXITY_API_KEY"
+    TOGETHER = "TOGETHER_API_KEY"
 
 
 # API domain of each provider: add one line per new provider
-PROVIDERS: dict[str, LLMName] = {
-    "api.mistral.ai": LLMName.MISTRAL,
-    "generativelanguage.googleapis.com": LLMName.GEMINI,
+PROVIDERS: dict[str, Provider] = {
+    "api.cohere.ai": Provider.COHERE,
+    "api.fireworks.ai": Provider.FIREWORKS,
+    "generativelanguage.googleapis.com": Provider.GEMINI,
+    "api.groq.com": Provider.GROQ,
+    "api.mistral.ai": Provider.MISTRAL,
+    "openrouter.ai": Provider.OPENROUTER,
+    "api.perplexity.ai": Provider.PERPLEXITY,
+    "api.together.xyz": Provider.TOGETHER,
 }
 
 # -----------------------------------
-TIMEOUT = 60.0
+API_TIMEOUT = 60.0
 STOP_SEQUENCES = ["<end_code>", "Observation:"]
 
 # MBPP limits (subject VI.1)

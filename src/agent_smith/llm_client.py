@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Any
 
@@ -5,7 +7,7 @@ import httpx
 from httpx import Response
 
 from agent_smith.config import Config
-from agent_smith.data import STOP_SEQUENCES, TIMEOUT
+from agent_smith.data import API_TIMEOUT, STOP_SEQUENCES
 
 
 class LLMClientError(Exception):
@@ -64,7 +66,7 @@ class LLMClient:
                 self.config.url,
                 headers={"Authorization": f"Bearer {self.config.keys[0]}"},
                 json=body,  # converted to JSON automatically
-                timeout=TIMEOUT,
+                timeout=API_TIMEOUT,
             )
         except httpx.HTTPError as err:
             raise LLMClientError(f"Request failed: {err}") from err
