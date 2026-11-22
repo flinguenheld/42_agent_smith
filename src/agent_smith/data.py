@@ -31,8 +31,13 @@ PROVIDERS: dict[str, Provider] = {
 # -----------------------------------
 DEBUG = True
 
+# LLMClient --
 API_TIMEOUT = 60.0
+API_RETRY_MAX = 3
+API_RETRY_DELAY = 1.0  # seconds
+API_RETRY_STATUS = {429, 500, 502, 503, 504}
+
 STOP_SEQUENCES = ["<end_code>", "Observation:"]
 
-# MBPP limits (subject VI.1)
+# MBPP limits --
 MAX_ITERATIONS = 10
