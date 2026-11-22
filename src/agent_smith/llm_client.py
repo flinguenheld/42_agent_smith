@@ -44,17 +44,21 @@ class LLMClient:
 
     # ---------------------------------------------------------------- ASK ----
     def ask(
-        self, messages: list[dict[str, str]], max_tokens: int
+        self,
+        messages: list[dict[str, str]],
+        max_tokens: int,
+        timeout: float,
     ) -> LLMResponse:
         """Send the whole conversation and return the LLM's next answer.
 
         messages: [{"role": "system" | "user" | "assistant", "content": ...}]
         max_tokens: the server stops the answer after this many tokens.
+        timeout: seconds this call may take in total, retries included.
         The client keeps no history: the caller sends the full list each time.
         """
         body = self._new_body(messages, max_tokens)
         start = time.perf_counter()
-        response, retries = self._send_with_retries(body)
+        response, retries = self._send_with_retries(body, start + timeout)
         request_time_ms = (time.perf_counter() - start) * 1000
         data = self._read_json(response)
 
@@ -78,20 +82,29 @@ class LLMClient:
         }
 
     # --------------------------------------------------------------- SEND ----
-    def _send_with_retries(self, body: dict) -> tuple[Response, int]:
-        """Send the body, retrying temporary failures.
+    def _send_with_retries(
+        self, body: dict, end: float
+    ) -> tuple[Response, int]:
+        """Send the body, retrying temporary failures until `end`.
 
+        end: time.perf_counter() value after which we give up.
         Return (response, retries). Raise LLMClientError if it still fails.
         """
 
         retries: int = 0
         while True:
+            delay = API_RETRY_DELAY * (retries + 1)
             try:
-                return self._send(body), retries
+                return self._send(body, end - time.perf_counter()), retries
 
             except httpx.HTTPStatusError as err:
                 status = err.response.status_code
-                if status not in API_RETRY_STATUS or retries == API_RETRY_MAX:
+                no_time_left = time.perf_counter() + delay >= end
+                if (
+                    status not in API_RETRY_STATUS
+                    or retries == API_RETRY_MAX
+                    or no_time_left
+                ):
                     raise LLMClientError(
                         f"HTTP {status} after {retries} retries: "
                         f"{err.response.text}"
@@ -102,17 +115,20 @@ class LLMClient:
 
             # --
             retries += 1
-            time.sleep(API_RETRY_DELAY * retries)
+            time.sleep(delay)
 
-    def _send(self, body: dict) -> Response:
-        """POST the body to the provider and return a successful response."""
+    def _send(self, body: dict, timeout: float) -> Response:
+        """POST the body to the provider and return a successful response.
+
+        timeout: seconds left for the call; never more than API_TIMEOUT.
+        """
 
         # TODO: Check httpx stream to see if it's possible to stop before
         response = httpx.post(
             self.config.url,
             headers={"Authorization": f"Bearer {self.config.keys[0]}"},
             json=body,  # converted to JSON automatically
-            timeout=API_TIMEOUT,
+            timeout=min(API_TIMEOUT, timeout),
         )
 
         response.raise_for_status()

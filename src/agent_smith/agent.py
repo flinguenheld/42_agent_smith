@@ -1,7 +1,8 @@
-import time
+from enum import Enum
 
 from agent_smith.budget import TokenBudget
 from agent_smith.data import BENCHMARK, MAX_ITERATIONS
+from agent_smith.deadline import Deadline
 from agent_smith.extract import extract_code
 from agent_smith.llm_client import LLMClient, LLMClientError, LLMResponse
 from agent_smith.models import MBPPTaskInput, SolutionOutput, StepMetrics
@@ -11,6 +12,15 @@ from agent_smith.prompt import (
     build_task_message,
 )
 from agent_smith.sandbox import Sandbox
+
+
+class StopReason(str, Enum):
+    """Why the agent stopped without a final answer."""
+
+    API_ERROR = "API error"
+    MAX_ITERATIONS = "max iterations reached"
+    TIMEOUT = "timeout"
+    TOKEN_BUDGET = "token budget exhausted"
 
 
 class Agent:
@@ -32,13 +42,14 @@ class Agent:
         self.max_iterations = max_iterations
         self.messages: list[dict[str, str]] = []
         self.budget = TokenBudget()
+        self.deadline = Deadline()
         self.steps: list[StepMetrics] = []
 
     # -------------------------------------------------------------- SOLVE ----
     def solve(self) -> SolutionOutput:
         """Run the task and return its SolutionOutput."""
 
-        start = time.perf_counter()
+        self.deadline = Deadline()
         self.messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": build_task_message(self.task)},
@@ -47,8 +58,9 @@ class Agent:
         self.steps = []
 
         answer, error = self._loop()
-        return self._build_output(answer, error, time.perf_counter() - start)
+        return self._build_output(answer, error, self.deadline.elapsed)
 
+    # --------------------------------------------------------------- LOOP ----
     def _loop(self) -> tuple[str | None, str | None]:
         """Run rounds until a final answer, a limit or an API error.
 
@@ -58,20 +70,27 @@ class Agent:
         try:
             for _ in range(self.max_iterations):
                 if not self.budget.has_room:
-                    return None, "token budget exhausted"
+                    return None, StopReason.TOKEN_BUDGET.value
+                if self.deadline.expired:
+                    return None, StopReason.TIMEOUT.value
+
                 answer = self._round()
                 if answer is not None:
                     return answer, None
+
         except LLMClientError as err:
-            return None, str(err)
-        return None, "max iterations reached"
+            return None, f"{StopReason.API_ERROR.value}: {err}"
+
+        return None, StopReason.MAX_ITERATIONS.value
 
     # -------------------------------------------------------------- ROUND ----
     def _round(self) -> str | None:
         """Ask, extract, run. Return the final answer, or None."""
 
         response = self.client.ask(
-            self.messages, self.budget.max_tokens_for_next_call
+            self.messages,
+            self.budget.max_tokens_for_next_call,
+            self.deadline.remaining,
         )
         self.budget.add(response.input_tokens, response.output_tokens)
         self._add("assistant", response.text)
