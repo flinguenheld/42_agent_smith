@@ -1,11 +1,11 @@
 import sys
 
 from agent_smith.agent import Agent
-from agent_smith.config import Config, ConfigError
-from agent_smith.display import print_debug, print_error, print_info
-from agent_smith.llm_client import LLMClient, LLMClientError
+from agent_smith.agent.prompt import build_task_message
+from agent_smith.display import print_debug, print_error
+from agent_smith.llm.client import LLMClient, LLMClientError
+from agent_smith.llm.config import Config, ConfigError
 from agent_smith.models import MBPPTaskInput
-from agent_smith.prompt import build_task_message
 from agent_smith.sandbox import Sandbox
 
 if __name__ == "__main__":

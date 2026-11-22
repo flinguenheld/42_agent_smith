@@ -7,7 +7,6 @@ from typing import Any
 import httpx
 from httpx import Response
 
-from agent_smith.config import Config
 from agent_smith.data import (
     API_RETRY_DELAY,
     API_RETRY_MAX,
@@ -15,6 +14,7 @@ from agent_smith.data import (
     API_TIMEOUT,
     STOP_SEQUENCES,
 )
+from agent_smith.llm.config import Config
 
 
 class LLMClientError(Exception):
