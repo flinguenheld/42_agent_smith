@@ -44,6 +44,7 @@ DEBUG_LEVEL = DebugLevel.STEPS
 # DEBUG_LEVEL = DebugLevel.FULL
 
 # ------------------------------------------------------------- LLM CLIENT ----
+CHAT_PATH = "/chat/completions"  # added to the provider's base URL
 API_TIMEOUT = 60.0  # seconds, one HTTP request
 API_RETRY_MAX = 3
 API_RETRY_DELAY = 1.0  # seconds, multiplied by the retry number

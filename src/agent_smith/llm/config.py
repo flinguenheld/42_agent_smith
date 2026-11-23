@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 from dotenv import load_dotenv
 from termcolor import colored
 
-from agent_smith.data import PROVIDERS, Provider
+from agent_smith.data import CHAT_PATH, PROVIDERS, Provider
 from agent_smith.display import Display
 
 
@@ -18,7 +18,8 @@ class Config:
     """Find the provider from its URL and load its API keys from .env."""
 
     def __init__(self, url: str, model_name: str) -> None:
-        self.url: str = url
+        self.url: str = url.rstrip("/")  # base URL, e.g. ".../v1"
+        self.chat_url: str = self.url + CHAT_PATH
         self.model_name: str = model_name
 
         load_dotenv()

@@ -1,0 +1,73 @@
+from __future__ import annotations
+
+import argparse
+from dataclasses import dataclass
+from pathlib import Path
+
+
+@dataclass
+class CliArgs:
+    """The four options given by the moulinette."""
+
+    task_file: Path
+    output: Path
+    model_name: str
+    provider_url: str
+
+    # -------------------------------------------------------------- PARSE ----
+    @classmethod
+    def parse(cls, prog: str, argv: list[str] | None = None) -> CliArgs:
+        """Read the command line and return typed arguments.
+
+        argv: None reads sys.argv; a test can pass its own list.
+        """
+
+        parser = cls._build_parser(prog)
+        ns = parser.parse_args(argv)
+        cls._check_paths(parser, ns)
+
+        return cls(ns.task_file, ns.output, ns.model_name, ns.provider_url)
+
+    # ------------------------------------------------------- BUILD PARSER ----
+    @staticmethod
+    def _build_parser(prog: str) -> argparse.ArgumentParser:
+        """Return the parser for the four options."""
+
+        parser = argparse.ArgumentParser(prog=prog)
+        parser.add_argument(
+            "--task-file",
+            type=Path,
+            required=True,
+            help="task JSON dumped by the moulinette",
+        )
+        parser.add_argument(
+            "--output",
+            type=Path,
+            required=True,
+            help="where to write solution.json",
+        )
+        parser.add_argument(
+            "--model-name",
+            required=True,
+            help='e.g. "llama-3.3-70b"',
+        )
+        parser.add_argument(
+            "--provider-url",
+            required=True,
+            help='base URL, e.g. "https://api.groq.com/openai/v1"',
+        )
+        return parser
+
+    # -------------------------------------------------------- CHECK PATHS ----
+    @staticmethod
+    def _check_paths(
+        parser: argparse.ArgumentParser, ns: argparse.Namespace
+    ) -> None:
+        """Stop early (usage + exit 2) if a path is wrong, before the run."""
+
+        if not ns.task_file.is_file():
+            parser.error(f"--task-file: '{ns.task_file}' is not a file")
+        if not ns.output.parent.is_dir():
+            parser.error(
+                f"--output: folder '{ns.output.parent}' does not exist"
+            )

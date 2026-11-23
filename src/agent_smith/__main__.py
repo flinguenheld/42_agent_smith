@@ -21,9 +21,9 @@ if __name__ == "__main__":
     Display.debug("ON --")
 
     try:
-        # config = Config("https://api.mistral.ai/v1/chat/completions")
+        # config = Config("https://api.mistral.ai/v1")
         config = Config(
-            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+            "https://generativelanguage.googleapis.com/v1beta/openai",
             "gemini-3.5-flash-lite",
             # "gemini-3.5-flash",
         )
