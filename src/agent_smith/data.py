@@ -37,10 +37,11 @@ class DebugLevel(IntEnum):
     OFF = 0  # nothing
     SUMMARY = 1  # config, final SolutionOutput
     STEPS = 2  # + one short line per step
-    FULL = 3  # + every field of each model, as JSON
+    FULL = 3  # + every field of each model
 
 
 DEBUG_LEVEL = DebugLevel.STEPS
+# DEBUG_LEVEL = DebugLevel.FULL
 
 # ------------------------------------------------------------- LLM CLIENT ----
 API_TIMEOUT = 60.0  # seconds, one HTTP request

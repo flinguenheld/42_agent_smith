@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from termcolor import colored
 
 from agent_smith.data import DEBUG_LEVEL, DebugLevel
+from agent_smith.display.pretty import pretty_format
 
 
 class Display:
@@ -33,16 +34,18 @@ class Display:
         message: str | BaseModel | None,
         title: str = "Debug",
         level: DebugLevel = DebugLevel.SUMMARY,
+        full: bool = False,
     ) -> None:
         """Print message in purple on stderr if level <= DEBUG_LEVEL.
 
-        A model is shown as its summary, or as full JSON at FULL level.
+        A model is shown as its summary, or with all its fields if full is
+        True or at FULL level.
         """
 
         if level > DEBUG_LEVEL or not message:
             return
 
-        text = Display._to_text(message)
+        text = Display._to_text(message, full)
         prefix = f"     {title}  -> "
         blank = " " * len(prefix)
         first, *rest = text.splitlines()
@@ -53,11 +56,11 @@ class Display:
         print(file=sys.stderr)
 
     @staticmethod
-    def _to_text(message: str | BaseModel) -> str:
-        """Return message as text: a model's summary, or its full JSON."""
+    def _to_text(message: str | BaseModel, full: bool) -> str:
+        """Return message as text: a model's summary, or all its fields."""
 
         if isinstance(message, str):
             return message
-        if DEBUG_LEVEL >= DebugLevel.FULL:
-            return message.model_dump_json(indent=2)
+        if full or DEBUG_LEVEL >= DebugLevel.FULL:
+            return pretty_format(message.model_dump())
         return str(message)
