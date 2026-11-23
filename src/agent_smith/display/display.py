@@ -3,12 +3,20 @@ import sys
 from pydantic import BaseModel
 from termcolor import colored
 
-from agent_smith.data import DEBUG_LEVEL, DebugLevel
+from agent_smith.data import DebugLevel
 from agent_smith.display.pretty import pretty_format
 
 
 class Display:
     """Helpers to print with colors and debug levels."""
+
+    level: DebugLevel = DebugLevel.OFF
+
+    # ---------------------------------------------------- SET DEBUG LEVEL ----
+    @classmethod
+    def set_debug_level(cls, level: DebugLevel) -> None:
+        """Change the debug level, e.g. from the --debug flag."""
+        cls.level = level
 
     # -------------------------------------------------------------- ERROR ----
     @staticmethod
@@ -29,38 +37,39 @@ class Display:
         print(colored(message, "green"))
 
     # -------------------------------------------------------------- DEBUG ----
-    @staticmethod
+    @classmethod
     def debug(
+        cls,
         message: str | BaseModel | None,
         title: str = "Debug",
         level: DebugLevel = DebugLevel.SUMMARY,
         full: bool = False,
     ) -> None:
-        """Print message in purple on stderr if level <= DEBUG_LEVEL.
+        """Print message in light_cyan on stderr if level <= Display.level.
 
         A model is shown as its summary, or with all its fields if full is
         True or at FULL level.
         """
 
-        if level > DEBUG_LEVEL or not message:
+        if level > cls.level or not message:
             return
 
-        text = Display._to_text(message, full)
+        text = cls._to_text(message, full)
         prefix = f"     {title}  -> "
         blank = " " * len(prefix)
         first, *rest = text.splitlines()
 
-        print(colored(prefix + first, "magenta"), file=sys.stderr)
+        print(colored(prefix + first, "light_cyan"), file=sys.stderr)
         for line in rest:
-            print(colored(blank + line, "magenta"), file=sys.stderr)
+            print(colored(blank + line, "light_cyan"), file=sys.stderr)
         print(file=sys.stderr)
 
-    @staticmethod
-    def _to_text(message: str | BaseModel, full: bool) -> str:
+    @classmethod
+    def _to_text(cls, message: str | BaseModel, full: bool) -> str:
         """Return message as text: a model's summary, or all its fields."""
 
         if isinstance(message, str):
             return message
-        if full or DEBUG_LEVEL >= DebugLevel.FULL:
+        if full or cls.level >= DebugLevel.FULL:
             return pretty_format(message.model_dump())
         return str(message)

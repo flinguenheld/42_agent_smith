@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import NoReturn
 
+from agent_smith.data import DebugLevel
 from agent_smith.display import Display
 
 
@@ -22,12 +23,13 @@ class _Parser(argparse.ArgumentParser):
 
 @dataclass
 class CliArgs:
-    """The four options given by the moulinette."""
+    """The command line options: the moulinette's 4, plus --debug."""
 
     task_file: Path
     output: Path
     model_name: str
     provider_url: str
+    debug: DebugLevel
 
     # -------------------------------------------------------------- PARSE ----
     @classmethod
@@ -40,13 +42,16 @@ class CliArgs:
         parser = cls._build_parser(prog)
         ns = parser.parse_args(argv)
         cls._check_paths(parser, ns)
+        debug = DebugLevel[ns.debug.upper()]  # "steps" → DebugLevel.STEPS
 
-        return cls(ns.task_file, ns.output, ns.model_name, ns.provider_url)
+        return cls(
+            ns.task_file, ns.output, ns.model_name, ns.provider_url, debug
+        )
 
     # ------------------------------------------------------- BUILD PARSER ----
     @staticmethod
     def _build_parser(prog: str) -> argparse.ArgumentParser:
-        """Return the parser for the four options."""
+        """Return the parser for all the options."""
 
         parser = _Parser(prog=prog)
         parser.add_argument(
@@ -74,6 +79,13 @@ class CliArgs:
             metavar="URL",
             required=True,
             help='base URL, e.g. "https://api.groq.com/openai/v1"',
+        )
+        parser.add_argument(
+            "--debug",
+            metavar="LEVEL",
+            choices=[level.name.lower() for level in DebugLevel],
+            default=DebugLevel.OFF.name.lower(),
+            help=", ".join(level.name.lower() for level in DebugLevel),
         )
         return parser
 

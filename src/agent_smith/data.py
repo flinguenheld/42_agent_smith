@@ -40,9 +40,6 @@ class DebugLevel(IntEnum):
     FULL = 3  # + every field of each model
 
 
-DEBUG_LEVEL = DebugLevel.STEPS
-# DEBUG_LEVEL = DebugLevel.FULL
-
 # ------------------------------------------------------------- LLM CLIENT ----
 CHAT_PATH = "/chat/completions"  # added to the provider's base URL
 API_TIMEOUT = 60.0  # seconds, one HTTP request

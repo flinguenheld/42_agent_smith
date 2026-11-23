@@ -60,7 +60,7 @@ Solve one MBPP task and write its `solution.json`:
 
 ```sh
 uv run python -m agent_mbpp --task-file FILE --output FILE \
-    --model-name NAME --provider-url URL
+    --model-name NAME --provider-url URL [--debug LEVEL]
 ```
 
 ```text
@@ -69,13 +69,16 @@ uv run python -m agent_mbpp --task-file FILE --output FILE \
 --output FILE       where to write solution.json (the folder must exist)
 --model-name NAME   model of the provider, e.g. "llama-3.3-70b"
 --provider-url URL  base URL, e.g. "https://api.groq.com/openai/v1"
+--debug LEVEL       off (default), summary, steps or full
 ```
 
 Shortcut with Gemini (`TASK` and `OUTPUT` are optional):
 
 ```sh
-make run_gemini TASK=test_files/mbpp_task.json OUTPUT=test_files/mbpp_solution.json
+make run_gemini TASK=mbpp_test/task_3_is_not_prime.json OUTPUT=mbpp_test/solution.json
 ```
+
+Example tasks are in `mbpp_test/` (same format as the moulinette's dump).
 
 #### Documentation
 

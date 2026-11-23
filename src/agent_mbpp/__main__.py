@@ -23,9 +23,12 @@ def solve(args: CliArgs) -> SolutionOutput:
 def main() -> int:
     """Entry point: python -m agent_mbpp --task-file ... --output ...
 
-    Run one MBPP task; return the process exit code."""
+    Run one MBPP task; return the process exit code.
+    """
 
     args = CliArgs.parse("agent_mbpp")
+    Display.set_debug_level(args.debug)
+    Display.debug("--- ON ---")
     try:
         solution = solve(args)
 
@@ -40,6 +43,7 @@ def main() -> int:
     args.output.write_text(solution.model_dump_json(indent=2))
     Display.debug(solution, "Solution", full=True)
 
+    Display.debug("--- END ---")
     return 0
 
 

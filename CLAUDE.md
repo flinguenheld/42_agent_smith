@@ -36,7 +36,7 @@ Skip it when there's nothing to fix.
 src/
 ├─ agent_mbpp/     entry point: python -m agent_mbpp (thin)
 └─ agent_smith/    the library
-   ├─ cli.py       CliArgs: the 4 flags, shared by every entry point
+   ├─ cli.py       CliArgs: the flags, shared by every entry point
    ├─ agent/       the loop (think → extract → observe), budget, report
    ├─ llm/         LLMClient, Config (.env keys, base URL)
    ├─ display/     Display (colors, debug levels), pretty_format
@@ -80,8 +80,8 @@ Constraints from the subject:
   - `@dataclass` for simple data, Pydantic for config and output models
     (`SandboxConfig`, `StepMetrics`, `SolutionOutput`).
   - Output to the terminal goes through `Display` (`display/`), not bare
-    `print`. `Display.debug` filters by `DebugLevel` (`DEBUG_LEVEL` in
-    `data.py`).
+    `print`. `Display.debug` filters by `Display.level` (a `DebugLevel`
+    from `data.py`), set from the `--debug` flag (default `off`).
 - **Tests**: pytest. Only write new tests when we ask, but `make test` must
   stay green.
 
