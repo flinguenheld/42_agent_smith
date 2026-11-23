@@ -28,6 +28,15 @@ Keep the `try` block small, so it doesn't hide unrelated bugs.
 
 ---
 
+### Fail fast
+
+Detect a problem and stop **as early as possible**, before any long or expensive work.
+Example: `CliArgs._check_paths` rejects a wrong `--output` folder before the agent
+spends 120 s and tokens on a run it couldn't save. See
+[How a run works](how_a_run_works.md).
+
+---
+
 ### httpx
 
 A Python library that sends HTTP requests, such as a POST to an [LLM](#llm)
@@ -38,6 +47,13 @@ the same job, but its code is longer and harder to read.
 response = httpx.post(url, headers={"Authorization": f"Bearer {key}"}, json=body)
 data = response.json()
 ```
+
+---
+
+### KISS
+
+*Keep It Simple, Stupid.* Prefer the simplest solution that works. Example: we use
+`argparse` (standard library, 4 flags) rather than a CLI framework.
 
 ---
 
@@ -108,3 +124,11 @@ src/                   ← just a box, not imported
 A small piece of text, about ¾ of an English word, that an [LLM](#llm) reads and writes.
 Providers count usage in tokens, and the subject limits them: MBPP allows at most
 6,000 input tokens per task.
+
+---
+
+### YAGNI
+
+*You Aren't Gonna Need It.* Don't build something "in case we need it later": add it
+when a real need appears. Example: no `--debug` flag yet, `DEBUG_LEVEL` in `data.py`
+is enough for now.

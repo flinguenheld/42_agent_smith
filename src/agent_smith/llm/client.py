@@ -125,7 +125,7 @@ class LLMClient:
 
         # TODO: Check httpx stream to see if it's possible to stop before
         response = httpx.post(
-            self.config.url,
+            self.config.chat_url,
             headers={"Authorization": f"Bearer {self.config.keys[0]}"},
             json=body,  # converted to JSON automatically
             timeout=min(API_TIMEOUT, timeout),
