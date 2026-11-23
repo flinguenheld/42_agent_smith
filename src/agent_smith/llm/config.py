@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from termcolor import colored
 
 from agent_smith.data import PROVIDERS, Provider
-from agent_smith.display import print_info
+from agent_smith.display import Display
 
 
 class ConfigError(Exception):
@@ -25,8 +25,9 @@ class Config:
         self.name: Provider = self._find_provider()
         self.keys: list[str] = self._load_keys()
 
-        print_info(f"Provider: {self.name.name} with {len(self.keys)} keys.")
+        Display.info(f"Provider: {self.name.name} with {len(self.keys)} keys.")
 
+    # ------------------------------------------------------ FIND PROVIDER ----
     def _find_provider(self) -> Provider:
         """Look up the URL's domain in the PROVIDERS table."""
 
@@ -37,6 +38,7 @@ class Config:
 
         raise ConfigError(f"Unknown provider for '{self.url}'")
 
+    # ---------------------------------------------------------- LOAD KEYS ----
     def _load_keys(self) -> list[str]:
         """Read NAME=key1,key2,... from .env and return the list of keys."""
 
@@ -48,12 +50,12 @@ class Config:
 
         raise ConfigError(f"'{var_name}' is missing or empty in .env")
 
-    # -------------------------------------------------------------
-    # -------------------------------------------------------------------------
+    # ---------------------------------------------------------------- STR ----
     def __str__(self) -> str:
         masked = ",".join(f"***{key[-4:]}" for key in self.keys)
         return f"{self.name.value}={masked}"
 
+    # -------------------------------------------------------------- USAGE ----
     @staticmethod
     def usage() -> str:
         title = colored(

@@ -36,6 +36,13 @@ class StepMetrics(BaseModel):
     sandbox_output: str = ""
     retries: int = 0
 
+    def __str__(self) -> str:
+        return (
+            f"tokens in/out={self.input_tokens}/{self.output_tokens}  "
+            f"time={self.request_time_ms:.0f}ms  retries={self.retries}  "
+            f"code={'yes' if self.sandbox_input else 'no'}"
+        )
+
 
 class SolutionOutput(BaseModel):
     """What the agent produces for one task (written to solution.json)."""
@@ -55,8 +62,6 @@ class SolutionOutput(BaseModel):
     timestamp: str = Field(default_factory=_now)
 
     def __str__(self) -> str:
-        """Return a short summary for the terminal."""
-
         return (
             f"SolutionOutput:\n"
             f"success={self.success}  iterations={self.iterations}  "

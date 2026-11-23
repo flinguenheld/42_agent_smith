@@ -2,7 +2,7 @@ import sys
 
 from agent_smith.agent import Agent
 from agent_smith.agent.prompt import build_task_message
-from agent_smith.display import print_debug, print_error
+from agent_smith.display import Display
 from agent_smith.llm.client import LLMClient, LLMClientError
 from agent_smith.llm.config import Config, ConfigError
 from agent_smith.models import MBPPTaskInput
@@ -18,6 +18,7 @@ if __name__ == "__main__":
             "assert set(similar_elements((3,4,5,6),(5,7,4,10))) == set((4,5))",
         ],
     )
+    Display.debug("ON --")
 
     try:
         # config = Config("https://api.mistral.ai/v1/chat/completions")
@@ -26,21 +27,21 @@ if __name__ == "__main__":
             "gemini-3.5-flash-lite",
             # "gemini-3.5-flash",
         )
-        print_debug(str(config), "Config")
+        Display.debug(str(config), "Config")
 
         with Sandbox(None, None) as sandbox:
             agent = Agent(LLMClient(config), sandbox, task)
             prompt = build_task_message(task)
-            print_debug(prompt, "Initial prompt")
+            Display.debug(prompt, "Initial prompt")
 
             solution = agent.solve()
-            print_debug(str(solution), "Solution")
+            Display.debug(solution, "Solution")
 
     except ConfigError as err:
-        print_error("CONFIG", str(err))
+        Display.error("CONFIG", str(err))
         print(Config.usage(), file=sys.stderr)
 
     except LLMClientError as err:
-        print_error("API", str(err))
+        Display.error("API", str(err))
 
-    print_debug("---- end ----")
+    Display.debug("END --")
