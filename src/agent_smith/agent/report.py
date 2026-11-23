@@ -23,23 +23,23 @@ class Report:
     # ----------------------------------------------------------- ADD STEP ----
     def add_step(
         self, response: LLMResponse, code: str, observation: str
-    ) -> None:
-        """Save the metrics of one round ("" when nothing was run)."""
+    ) -> StepMetrics:
+        """Save and return the metrics of one step ("" if nothing ran)."""
 
-        self.steps.append(
-            StepMetrics(
-                step=len(self.steps) + 1,
-                input_tokens=response.input_tokens,
-                output_tokens=response.output_tokens,
-                request_time_ms=response.request_time_ms,
-                api_url=self.api_url,
-                model_name=self.model_name,
-                llm_output=response.text,
-                sandbox_input=code,
-                sandbox_output=observation,
-                retries=response.retries,
-            )
+        step = StepMetrics(
+            step=len(self.steps) + 1,
+            input_tokens=response.input_tokens,
+            output_tokens=response.output_tokens,
+            request_time_ms=response.request_time_ms,
+            api_url=self.api_url,
+            model_name=self.model_name,
+            llm_output=response.text,
+            sandbox_input=code,
+            sandbox_output=observation,
+            retries=response.retries,
         )
+        self.steps.append(step)
+        return step
 
     # -------------------------------------------------------------- BUILD ----
     def build(

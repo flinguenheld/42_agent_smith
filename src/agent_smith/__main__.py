@@ -35,7 +35,7 @@ if __name__ == "__main__":
             Display.debug(prompt, "Initial prompt")
 
             solution = agent.solve()
-            Display.debug(str(solution), "Solution")
+            Display.debug(solution, "Solution")
 
     except ConfigError as err:
         Display.error("CONFIG", str(err))

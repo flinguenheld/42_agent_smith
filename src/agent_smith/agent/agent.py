@@ -9,8 +9,9 @@ from agent_smith.agent.prompt import (
     build_task_message,
 )
 from agent_smith.agent.report import Report
-from agent_smith.data import MAX_ITERATIONS
-from agent_smith.llm.client import LLMClient, LLMClientError
+from agent_smith.data import MAX_ITERATIONS, DebugLevel
+from agent_smith.display import Display
+from agent_smith.llm.client import LLMClient, LLMClientError, LLMResponse
 from agent_smith.models import MBPPTaskInput, SolutionOutput
 from agent_smith.sandbox import Sandbox
 
@@ -28,6 +29,15 @@ class Agent:
     """Solve one MBPP task: ask the LLM, run its code, show the result.
 
     The caller creates (and closes) the client and the sandbox.
+
+    solve()
+     └─ _loop()   until: final answer, max iterations,
+         │               token budget, timeout or API error
+         └─ _step()
+             ├─ _think()           ask the LLM    → messages
+             ├─ extract_code()
+             ├─ no code: _ask_for_code()  ask again → messages, report
+             └─ code:    _observe()       run code  → messages, report
     """
 
     def __init__(
@@ -70,7 +80,7 @@ class Agent:
 
     # --------------------------------------------------------------- LOOP ----
     def _loop(self) -> tuple[str | None, str | None]:
-        """Run rounds until a final answer, a limit or an API error.
+        """Run steps until a final answer, a limit or an API error.
 
         Return (final answer, error); exactly one of them is None.
         """
@@ -82,7 +92,7 @@ class Agent:
                 if self.deadline.expired:
                     return None, StopReason.TIMEOUT.value
 
-                answer = self._round()
+                answer = self._step()
                 if answer is not None:
                     return answer, None
 
@@ -91,9 +101,22 @@ class Agent:
 
         return None, StopReason.MAX_ITERATIONS.value
 
-    # -------------------------------------------------------------- ROUND ----
-    def _round(self) -> str | None:
-        """Ask, extract, run. Return the final answer, or None."""
+    # --------------------------------------------------------------- STEP ----
+    def _step(self) -> str | None:
+        """Think, extract, observe. Return the final answer, or None."""
+
+        response = self._think()
+        code = extract_code(response.text)
+
+        if code is None:
+            self._ask_for_code(response)
+            return None
+
+        return self._observe(response, code)
+
+    # ------------------------------------- THINK ----
+    def _think(self) -> LLMResponse:
+        """Send the conversation to the LLM and count its tokens."""
 
         response = self.client.ask(
             self.messages,
@@ -101,21 +124,36 @@ class Agent:
             self.deadline.remaining,
         )
         self.budget.add(response.input_tokens, response.output_tokens)
-        self._add("assistant", response.text)
+        self._add_message("assistant", response.text)
+        return response
 
-        code = extract_code(response.text)
-        if code is None:
-            self._add("user", NO_CODE_MESSAGE)
-            self.report.add_step(response, "", "")
-            return None
+    # ------------------------------ ASK FOR CODE ----
+    def _ask_for_code(self, response: LLMResponse) -> None:
+        """Ask the LLM again for a python block."""
+
+        self._add_message("user", NO_CODE_MESSAGE)
+        self._record_step(response, "", "")
+
+    # ----------------------------------- OBSERVE ----
+    def _observe(self, response: LLMResponse, code: str) -> str | None:
+        """Run the code and send the observation back to the LLM."""
 
         result = self.sandbox.run(code)
         observation = result.to_observation()
-        self._add("user", "Observation: " + observation)
-        self.report.add_step(response, code, observation)
+        self._add_message("user", "Observation: " + observation)
+        self._record_step(response, code, observation)
         return result.final_answer
 
-    def _add(self, role: str, content: str) -> None:
+    # ------------------------------ RECORD / ADD ----
+    def _record_step(
+        self, response: LLMResponse, code: str, observation: str
+    ) -> None:
+        """Save the step in the report and show it in debug mode."""
+
+        step = self.report.add_step(response, code, observation)
+        Display.debug(step, f"Step {step.step}", DebugLevel.STEPS)
+
+    def _add_message(self, role: str, content: str) -> None:
         """Append one message to the conversation."""
 
         self.messages.append({"role": role, "content": content})
