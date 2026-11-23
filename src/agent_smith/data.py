@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import Enum, IntEnum
 
 
-# ------------------------------------------------------------ PROVIDERS ----
+# -------------------------------------------------------------- PROVIDERS ----
 class Provider(Enum):
     """LLM API provider; the value is its variable name in .env."""
 
@@ -29,17 +29,27 @@ PROVIDERS: dict[str, Provider] = {
     "api.together.xyz": Provider.TOGETHER,
 }
 
-# -------------------------------------------------------------- DISPLAY ----
-DEBUG = True
 
-# ----------------------------------------------------------- LLM CLIENT ----
+# ------------------------------------------------------------------ DEBUG ----
+class DebugLevel(IntEnum):
+    """How much debug output to print; each level includes the lower ones."""
+
+    OFF = 0  # nothing
+    SUMMARY = 1  # config, final SolutionOutput
+    STEPS = 2  # + one short line per step
+    FULL = 3  # + every field of each model, as JSON
+
+
+DEBUG_LEVEL = DebugLevel.STEPS
+
+# ------------------------------------------------------------- LLM CLIENT ----
 API_TIMEOUT = 60.0  # seconds, one HTTP request
 API_RETRY_MAX = 3
 API_RETRY_DELAY = 1.0  # seconds, multiplied by the retry number
 API_RETRY_STATUS = {429, 500, 502, 503, 504}
 STOP_SEQUENCES = ["<end_code>", "Observation:"]
 
-# ----------------------------------------------------------------- MBPP ----
+# ------------------------------------------------------------------- MBPP ----
 BENCHMARK = "mbpp"
 MAX_ITERATIONS = 10
 MAX_INPUT_TOKENS = 6_000  # cumulative over the whole task
