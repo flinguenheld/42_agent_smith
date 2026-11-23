@@ -35,7 +35,6 @@ def main() -> int:
 
     except ConfigError as err:
         Display.error("CONFIG", str(err))
-        print(Config.usage(), file=sys.stderr)
         return 1
 
     args.output.write_text(solution.model_dump_json(indent=2))

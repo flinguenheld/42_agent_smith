@@ -1,5 +1,3 @@
-import sys
-
 from agent_smith.agent import Agent
 from agent_smith.agent.prompt import build_task_message
 from agent_smith.display import Display
@@ -39,7 +37,6 @@ if __name__ == "__main__":
 
     except ConfigError as err:
         Display.error("CONFIG", str(err))
-        print(Config.usage(), file=sys.stderr)
 
     except LLMClientError as err:
         Display.error("API", str(err))
