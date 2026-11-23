@@ -1,8 +1,23 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import NoReturn
+
+from agent_smith.display import Display
+
+
+class _Parser(argparse.ArgumentParser):
+    """Make the error beautiful again."""
+
+    def error(self, message: str) -> NoReturn:
+        """Print the error and the full help in a red block, then exit 2."""
+
+        text = f"{message}\n\n------\n{self.format_help()}"
+        Display.error("ARGUMENTS", text)
+        sys.exit(2)
 
 
 @dataclass
@@ -33,26 +48,30 @@ class CliArgs:
     def _build_parser(prog: str) -> argparse.ArgumentParser:
         """Return the parser for the four options."""
 
-        parser = argparse.ArgumentParser(prog=prog)
+        parser = _Parser(prog=prog)
         parser.add_argument(
             "--task-file",
             type=Path,
+            metavar="FILE",
             required=True,
             help="task JSON dumped by the moulinette",
         )
         parser.add_argument(
             "--output",
             type=Path,
+            metavar="FILE",
             required=True,
             help="where to write solution.json",
         )
         parser.add_argument(
             "--model-name",
+            metavar="NAME",
             required=True,
             help='e.g. "llama-3.3-70b"',
         )
         parser.add_argument(
             "--provider-url",
+            metavar="URL",
             required=True,
             help='base URL, e.g. "https://api.groq.com/openai/v1"',
         )

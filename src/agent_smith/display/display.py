@@ -14,8 +14,8 @@ class Display:
     @staticmethod
     def error(title: str, message: str) -> None:
         """Print an error in red on stderr."""
-        header = f"--- {title} ERROR ---\n"
-        footer = "-" * (len(header) - 1)
+        header = f"\n--- {title} ERROR ---\n"
+        footer = "-" * (len(header) - 2)
 
         print(colored(header, "red"), file=sys.stderr)
         for line in message.splitlines():

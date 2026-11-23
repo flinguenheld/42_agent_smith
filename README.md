@@ -21,11 +21,23 @@ git clone https://github.com/flinguenheld/42_agent_smith
 cd 42_agent_smith
 ```
 
+Create a `.env` file at the root with the API keys of your providers,
+one line per provider (several keys are separated by commas):
+
+```sh
+GEMINI_API_KEY=key1,key2,...
+GROQ_API_KEY=key1
+```
+
+The variable names are listed in `Provider` (`src/agent_smith/data.py`).
+
+> `.env` is in `.gitignore`: never commit your keys.
+
 Check the environment:
 
 ```sh
-uv run python --version # → Python 3.10
-make run                # → Hello from 42-agent-smith!
+uv run python --version            # → Python 3.10
+uv run python -m agent_mbpp --help # → usage of the MBPP agent
 ```
 
 #### Make rules
@@ -33,7 +45,7 @@ make run                # → Hello from 42-agent-smith!
 ```sh
 make install         # create .venv (Python 3.10.0) and install dependencies
 make install_goinfre # same, but .venv is a symlink to ~/goinfre/.cache_agent_smith/venv
-make run             # run the program
+make run_gemini      # solve one MBPP task with Gemini (see MBPP below)
 make lint            # check code style (flake8) and types (mypy)
 make clean           # remove caches (__pycache__, .mypy_cache, .ruff_cache)
 make fclean          # clean + remove the virtual environment
@@ -41,6 +53,29 @@ make fclean          # clean + remove the virtual environment
 
 > On 42 computers, `~/goinfre` is local to each machine and may be wiped:
 > if `uv` fails because `.venv` points to nothing, just run `make install_goinfre` again.
+
+#### MBPP
+
+Solve one MBPP task and write its `solution.json`:
+
+```sh
+uv run python -m agent_mbpp --task-file FILE --output FILE \
+    --model-name NAME --provider-url URL
+```
+
+```text
+-h, --help          show this help message and exit
+--task-file FILE    task JSON dumped by the moulinette
+--output FILE       where to write solution.json (the folder must exist)
+--model-name NAME   model of the provider, e.g. "llama-3.3-70b"
+--provider-url URL  base URL, e.g. "https://api.groq.com/openai/v1"
+```
+
+Shortcut with Gemini (`TASK` and `OUTPUT` are optional):
+
+```sh
+make run_gemini TASK=test_files/mbpp_task.json OUTPUT=test_files/mbpp_solution.json
+```
 
 #### Documentation
 
