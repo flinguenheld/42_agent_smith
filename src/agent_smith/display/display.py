@@ -1,8 +1,11 @@
+from collections.abc import Callable
+
 from pydantic import BaseModel
 from rich.console import Console
 
 from agent_smith.data import DebugLevel
 from agent_smith.display.pretty import pretty_format
+from agent_smith.display.progress import TaskProgress
 
 
 class Display:
@@ -11,6 +14,14 @@ class Display:
     level: DebugLevel = DebugLevel.OFF
     _out = Console(highlight=False, soft_wrap=True, markup=False)
     _err = Console(stderr=True, highlight=False, soft_wrap=True, markup=False)
+
+    @classmethod
+    # QUESTION: max_seconds could use directly the data const?
+    def progress(
+        cls, max_seconds: float, elapsed: Callable[[], float]
+    ) -> TaskProgress:
+        """Return live progress bars on stderr; Display prints go above."""
+        return TaskProgress(cls._err, max_seconds, elapsed)
 
     # ---------------------------------------------------- SET DEBUG LEVEL ----
     @classmethod

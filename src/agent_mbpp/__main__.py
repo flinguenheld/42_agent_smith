@@ -16,8 +16,17 @@ def solve(args: CliArgs) -> SolutionOutput:
 
     task = MBPPTaskInput.model_validate_json(args.task_file.read_text())
     config = Config(args.provider_url, args.model_name)
+
     with Sandbox() as sandbox:
-        return Agent(LLMClient(config), sandbox, task).solve()
+        agent = Agent(LLMClient(config), sandbox, task)
+
+        # solve() makes a new Deadline: the lambda must read agent.deadline
+        # at each refresh, not keep the old one.
+        with Display.progress(
+            agent.deadline.seconds,
+            lambda: agent.deadline.elapsed,
+        ):
+            return agent.solve()
 
 
 def main() -> int:
