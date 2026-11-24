@@ -16,7 +16,14 @@ import ast
 import builtins as _builtins
 import contextlib
 from collections.abc import Callable, Iterable, Iterator
-from typing import Any
+from typing import Any, NoReturn
+
+from ..data import (
+    BLOCKED_BUILTINS,
+    FORBIDDEN_ATTRS,
+    HIDDEN_BUILTINS,
+    SAFE_DUNDERS,
+)
 
 from .config import SandboxConfig
 
@@ -105,6 +112,67 @@ def make_import(allowlist: list[str]) -> Callable[..., Any]:
     return safe_import
 
 
+# ------------------------------------------------------------------- builtins
+
+
+def is_attr_allowed(name: str) -> bool:
+    """False for dunders (except SAFE_DUNDERS) and for FORBIDDEN_ATTRS."""
+    if len(name) > 4 and name.startswith("__") and name.endswith("__"):
+        return name in SAFE_DUNDERS
+    return name not in FORBIDDEN_ATTRS
+
+
+def _checked(name: Any) -> str:
+    """Return name if user code may use it as an attribute, else raise."""
+    if not isinstance(name, str):
+        raise TypeError("attribute name must be a string")
+    if not is_attr_allowed(name):
+        raise ForbiddenAttribute(
+            f"access to attribute '{name}' is not allowed"
+        )
+    return name
+
+
+def safe_getattr(obj: Any, name: Any, *default: Any) -> Any:
+    """getattr() that refuses the attributes is_attr_allowed() refuses."""
+    return getattr(obj, _checked(name), *default)
+
+
+def safe_setattr(obj: Any, name: Any, value: Any) -> None:
+    """setattr() that refuses the attributes is_attr_allowed() refuses."""
+    setattr(obj, _checked(name), value)
+
+
+def safe_delattr(obj: Any, name: Any) -> None:
+    """delattr() that refuses the attributes is_attr_allowed() refuses."""
+    delattr(obj, _checked(name))
+
+
+def _blocked(name: str) -> Callable[..., NoReturn]:
+    """A stand-in for a removed builtin, with an explicit error."""
+
+    def blocked(*args: Any, **kwargs: Any) -> NoReturn:
+        raise ForbiddenOperation(f"{name}() is not available in the sandbox")
+
+    blocked.__name__ = blocked.__qualname__ = name
+    return blocked
+
+
+def safe_builtins(cfg: SandboxConfig) -> dict[str, Any]:
+    """The __builtins__ dict given to user code."""
+    safe = {
+        k: v for k, v in vars(_builtins).items() if k not in HIDDEN_BUILTINS
+    }
+    safe.update({name: _blocked(name) for name in BLOCKED_BUILTINS})
+    safe.update({
+        "__import__": make_import(cfg.authorized_imports),
+        "getattr": safe_getattr,
+        "setattr": safe_setattr,
+        "delattr": safe_delattr,
+    })
+    return safe
+
+
 # ----------------------------------------------------------------- static AST
 
 
@@ -118,13 +186,13 @@ class _Checker(ast.NodeVisitor):
     def _bad(self, node: ast.AST, msg: str) -> None:
         self.problems.append(f"line {getattr(node, 'lineno', '?')}: {msg}")
 
-    def visit_ast_import(self, node: ast.Import) -> None:
+    def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
             reason = check_import(alias.name, (), 0, self.allowlist)
             if reason:
                 self._bad(node, reason)
 
-    def visit_ast_import_from(self, node: ast.ImportFrom) -> None:
+    def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         names = [alias.name for alias in node.names]
         reason = check_import(
             node.module or "", names, node.level, self.allowlist
@@ -155,9 +223,7 @@ class SandboxPolicy:
         return check_ast(tree, self.cfg.authorized_imports)
 
     def builtins(self) -> dict[str, Any]:
-        safe = dict(vars(_builtins))
-        safe["__import__"] = make_import(self.cfg.authorized_imports)
-        return safe
+        return safe_builtins(self.cfg)
 
     def lock_down(self) -> None:
         pass

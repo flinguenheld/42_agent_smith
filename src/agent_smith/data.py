@@ -55,3 +55,27 @@ MAX_INPUT_TOKENS = 6_000  # cumulative over the whole task
 MAX_OUTPUT_TOKENS = 1_500  # cumulative over the whole task
 MAX_TOKENS_PER_CALL = 500  # so one reply can't use the whole budget
 TIMEOUT_SECONDS = 120.0  # wall-clock, the whole task
+
+# ----------------------------------------------------------------- SANDBOX ---
+# Builtins replaced by a stub that raises ForbiddenOperation
+BLOCKED_BUILTINS = frozenset({
+    "eval", "exec", "compile",  # run code the policy never checked
+    "globals", "locals", "vars",  # reach namespaces and __builtins__
+    "input", "breakpoint", "help",  # read stdin, start a debugger
+    "exit", "quit",  # would stop the agent loop (SystemExit)
+})
+# Builtins removed without a stub: not callable, or dangerous to name
+HIDDEN_BUILTINS = frozenset({
+    "__loader__", "__spec__",  # BuiltinImporter: loads posix, sys...
+    "copyright", "credits", "license",  # interactive-shell helpers
+})
+# Dunder attributes user code may still use
+SAFE_DUNDERS = frozenset({"__init__", "__name__", "__doc__"})
+# Not dunders, but they lead to frames, code objects or globals
+FORBIDDEN_ATTRS = frozenset({
+    "gi_frame", "gi_code", "gi_yieldfrom",  # generators
+    "cr_frame", "cr_code", "cr_await", "cr_origin",  # coroutines
+    "ag_frame", "ag_code", "ag_await",  # async generators
+    "f_back", "f_builtins", "f_code", "f_globals", "f_locals",  # frames
+    "f_trace", "tb_frame", "tb_next",  # frames, tracebacks
+})
