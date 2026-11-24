@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 from pydantic import BaseModel
 from rich.console import Console
 
@@ -16,12 +14,9 @@ class Display:
     _err = Console(stderr=True, highlight=False, soft_wrap=True, markup=False)
 
     @classmethod
-    # QUESTION: max_seconds could use directly the data const?
-    def progress(
-        cls, max_seconds: float, elapsed: Callable[[], float]
-    ) -> TaskProgress:
-        """Return live progress bars on stderr; Display prints go above."""
-        return TaskProgress(cls._err, max_seconds, elapsed)
+    def progress(cls) -> TaskProgress:
+        """Return an empty progress bar on stderr; Display prints go above."""
+        return TaskProgress(cls._err)
 
     # ---------------------------------------------------- SET DEBUG LEVEL ----
     @classmethod

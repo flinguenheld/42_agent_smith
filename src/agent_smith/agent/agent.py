@@ -51,6 +51,7 @@ class Agent:
         self.sandbox = sandbox
         self.task = task
         self.max_iterations = max_iterations
+        self.iteration = 0
         self.messages: list[dict[str, str]] = []
         self.budget = TokenBudget()
         self.deadline = Deadline()
@@ -66,6 +67,7 @@ class Agent:
             {"role": "user", "content": build_task_message(self.task)},
         ]
         self.budget = TokenBudget()
+        self.iteration = 0
         self.report = self._new_report()
 
         answer, error = self._loop()
@@ -92,6 +94,7 @@ class Agent:
                 if self.deadline.expired:
                     return None, StopReason.TIMEOUT.value
 
+                self.iteration += 1  # only steps that really run
                 answer = self._step()
                 if answer is not None:
                     return answer, None

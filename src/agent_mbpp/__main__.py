@@ -2,7 +2,7 @@ import sys
 
 from pydantic import ValidationError
 
-from agent_smith.agent import Agent
+from agent_smith.agent import Agent, progress_bars
 from agent_smith.cli import CliArgs
 from agent_smith.display import Display
 from agent_smith.llm.client import LLMClient
@@ -20,12 +20,7 @@ def solve(args: CliArgs) -> SolutionOutput:
     with Sandbox() as sandbox:
         agent = Agent(LLMClient(config), sandbox, task)
 
-        # solve() makes a new Deadline: the lambda must read agent.deadline
-        # at each refresh, not keep the old one.
-        with Display.progress(
-            agent.deadline.seconds,
-            lambda: agent.deadline.elapsed,
-        ):
+        with progress_bars(agent):
             return agent.solve()
 
 
