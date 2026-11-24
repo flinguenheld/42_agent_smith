@@ -1,7 +1,5 @@
-import sys
-
 from pydantic import BaseModel
-from termcolor import colored
+from rich.console import Console
 
 from agent_smith.data import DebugLevel
 from agent_smith.display.pretty import pretty_format
@@ -11,6 +9,8 @@ class Display:
     """Helpers to print with colors and debug levels."""
 
     level: DebugLevel = DebugLevel.OFF
+    _out = Console(highlight=False, soft_wrap=True, markup=False)
+    _err = Console(stderr=True, highlight=False, soft_wrap=True, markup=False)
 
     # ---------------------------------------------------- SET DEBUG LEVEL ----
     @classmethod
@@ -19,22 +19,22 @@ class Display:
         cls.level = level
 
     # -------------------------------------------------------------- ERROR ----
-    @staticmethod
-    def error(title: str, message: str) -> None:
+    @classmethod
+    def error(cls, title: str, message: str) -> None:
         """Print an error in red on stderr."""
         header = f"\n--- {title} ERROR ---\n"
         footer = "-" * (len(header) - 2)
 
-        print(colored(header, "red"), file=sys.stderr)
+        cls._err.print(header, style="red")
         for line in message.splitlines():
-            print(colored(f"   {line}", "red"), file=sys.stderr)
-        print(colored(f"{footer}", "red"), file=sys.stderr)
+            cls._err.print(f"   {line}", style="red")
+        cls._err.print(footer, style="red")
 
     # --------------------------------------------------------------- INFO ----
-    @staticmethod
-    def info(message: str) -> None:
+    @classmethod
+    def info(cls, message: str) -> None:
         """Print an information message in green on stdout."""
-        print(colored(message, "green"))
+        cls._out.print(message, style="green")
 
     # -------------------------------------------------------------- DEBUG ----
     @classmethod
@@ -45,7 +45,7 @@ class Display:
         level: DebugLevel = DebugLevel.SUMMARY,
         full: bool = False,
     ) -> None:
-        """Print message in light_cyan on stderr if level <= Display.level.
+        """Print message in magenta on stderr if level <= Display.level.
 
         A model is shown as its summary, or with all its fields if full is
         True or at FULL level.
@@ -59,10 +59,10 @@ class Display:
         blank = " " * len(prefix)
         first, *rest = text.splitlines()
 
-        print(colored(prefix + first, "light_cyan"), file=sys.stderr)
+        cls._err.print(prefix + first, style="magenta")
         for line in rest:
-            print(colored(blank + line, "light_cyan"), file=sys.stderr)
-        print(file=sys.stderr)
+            cls._err.print(blank + line, style="magenta")
+        cls._err.print()
 
     @classmethod
     def _to_text(cls, message: str | BaseModel, full: bool) -> str:
