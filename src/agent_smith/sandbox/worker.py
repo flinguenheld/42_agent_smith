@@ -58,28 +58,6 @@ class Policy(Protocol):
     def trusted(self) -> contextlib.AbstractContextManager[None]: ...
 
 
-class NoPolicy:
-    """Allows everything. Placeholder until policy.py is written."""
-
-    violations: tuple[type[BaseException], ...] = ()
-
-    def __init__(self, cfg: SandboxConfig) -> None:
-        self.cfg = cfg
-
-    def check(self, tree: ast.Module) -> list[str]:
-        return []
-
-    def builtins(self) -> dict[str, Any]:
-        return dict(vars(builtins))
-
-    def lock_down(self) -> None:
-        pass
-
-    @contextlib.contextmanager
-    def trusted(self) -> Iterator[None]:
-        yield
-
-
 # ----------------------------------------------------------------- channel
 
 
