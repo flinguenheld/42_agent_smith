@@ -14,6 +14,8 @@ from agent_smith.sandbox.policy import (
     is_attr_allowed,
     is_import_allowed,
     safe_builtins,
+    make_import,
+    is_dunder,
 )
 
 ALLOW = ["math", "collections", "collections.*", "json", "typing.*"]
@@ -127,16 +129,13 @@ def test_import_blocked(cfg, code):
     assert run(code, cfg).status is Status.POLICY_VIOLATION
 
 
-def test_runtime_block_is_an_import_error(cfg):
-    code = (
-        "try:\n"
-        "    __import__('numpy')\n"
-        "except ImportError as e:\n"
-        "    print('caught:', e)\n"
-    )
-    result = run(code, cfg)
-    assert result.status is Status.OK
-    assert "caught: import of 'numpy' is not allowed" in result.stdout
+def test_runtime_import_hook():
+    # User code can no longer reach __import__ (step 3 refuses the name),
+    # so the runtime hook is tested directly.
+    safe_import = make_import(ALLOW)
+    with pytest.raises(ImportError, match="import of 'numpy' is not"):
+        safe_import("numpy")
+    assert safe_import("math").sqrt(4) == 2.0
 
 
 @pytest.mark.parametrize(
@@ -223,13 +222,17 @@ def test_blocked_builtins(cfg, code):
     assert "is not available in the sandbox" in result.error
 
 
-@pytest.mark.parametrize(
-    "code", ["__loader__", "__spec__", "copyright", "credits", "license"]
-)
+@pytest.mark.parametrize("code", ["copyright", "credits", "license"])
 def test_hidden_builtins(cfg, code):
     result = run(code, cfg)
     assert result.status is Status.ERROR
     assert "NameError" in result.error
+
+
+@pytest.mark.parametrize("code", ["__loader__", "__spec__"])
+def test_hidden_dunder_builtins(cfg, code):
+    # step 3 refuses dunder names before the code runs
+    assert run(code, cfg).status is Status.POLICY_VIOLATION
 
 
 @pytest.mark.parametrize(
@@ -278,3 +281,116 @@ def test_getattr_non_string_name(cfg):
     result = run("getattr(1, 2)", cfg)
     assert result.status is Status.ERROR
     assert "TypeError" in result.error
+
+
+# ------------------------------------------------ step 3: pure helpers
+
+
+@pytest.mark.parametrize(
+    "name, dunder",
+    [
+        ("__class__", True),
+        ("__init__", True),
+        ("__x", False),  # private name mangling, not a dunder
+        ("x__", False),
+        ("____", False),  # only underscores
+        ("_x_", False),
+    ],
+)
+def test_is_dunder(name, dunder):
+    assert is_dunder(name) is dunder
+
+
+@pytest.mark.parametrize(
+    "code, expected",
+    [
+        ("x.__class__", "attribute '__class__'"),
+        ("x.gi_frame", "attribute 'gi_frame'"),
+        ("__builtins__", "name '__builtins__'"),
+        ("import math as __builtins__", "name '__builtins__'"),
+        ("def f():\n    global __loader__", "name '__loader__'"),
+        ("match x:\n    case C(__dict__=d):\n        pass", "'__dict__'"),
+    ],
+)
+def test_check_ast_rules(code, expected):
+    problems = check_ast(ast.parse(code), ALLOW)
+    assert len(problems) == 1
+    assert expected in problems[0]
+
+
+def test_check_ast_finds_nested_attributes():
+    # a.__class__.b: the bad attribute is inside the value of .b
+    problems = check_ast(ast.parse("a.__class__.b"), ALLOW)
+    assert problems == [
+        "line 1: access to attribute '__class__' is not allowed"
+    ]
+
+
+def test_check_ast_reports_every_problem():
+    code = "import os\nx.__class__\n__builtins__\n"
+    problems = check_ast(ast.parse(code), ALLOW)
+    assert [p.split(":")[0] for p in problems] == [
+        "line 1",
+        "line 2",
+        "line 3",
+    ]
+
+
+# --------------------------------------------- step 3: real sandbox runs
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        "().__class__.__base__.__subclasses__()",
+        "def f():\n    pass\nf.__globals__",
+        "(lambda: 0).__code__",
+        "f'{(1).__class__}'",  # f-strings are parsed too
+        "[x.__class__ for x in [1]]",  # comprehensions
+        "class A:\n    y = (1).__class__",  # class bodies
+        "def f():\n    def g():\n        return g.__globals__",  # nested
+        "x = 1\nx.__class__ = int",  # assignment
+        "import math\nmath.__dict__",
+        "g = (x for x in [1])\ng.gi_frame",
+        "def f():\n    pass\nmatch f:\n    case object(__globals__=g):\n"
+        "        pass",
+        "__builtins__",
+        "import math as __builtins__",
+        "def f():\n    global __builtins__",
+        "__import__('os')",
+    ],
+)
+def test_escapes_blocked_statically(cfg, code):
+    result = run(code, cfg)
+    assert result.status is Status.POLICY_VIOLATION
+    assert "before execution" in result.error
+
+
+@pytest.mark.parametrize(
+    "code, expected",
+    [
+        (
+            "class A:\n"
+            "    def __init__(self):\n"
+            "        super().__init__()\n"
+            "    def __repr__(self):\n"
+            "        return 'A!'\n"
+            "A()",
+            "A!",
+        ),
+        ("if __name__ == '__main__':\n    print('main')", "main"),
+        ("def f():\n    pass\nf.__name__", "'f'"),
+        ("len.__doc__[:6]", "'Return'"),
+        (
+            "class B:\n"
+            "    def __init__(self):\n"
+            "        self.__x = 1\n"
+            "B()._B__x",
+            "1",
+        ),
+    ],
+)
+def test_allowed_dunders_still_work(cfg, code, expected):
+    result = run(code, cfg)
+    assert result.status is Status.OK, result.to_observation()
+    assert expected in result.stdout

@@ -115,11 +115,21 @@ def make_import(allowlist: list[str]) -> Callable[..., Any]:
 # ------------------------------------------------------------------- builtins
 
 
+def is_dunder(name: str) -> bool:
+    """True for dunders, names like __class__"""
+    return len(name) > 4 and name.startswith("__") and name.endswith("__")
+
+
 def is_attr_allowed(name: str) -> bool:
     """False for dunders (except SAFE_DUNDERS) and for FORBIDDEN_ATTRS."""
-    if len(name) > 4 and name.startswith("__") and name.endswith("__"):
+    if is_dunder(name):
         return name in SAFE_DUNDERS
     return name not in FORBIDDEN_ATTRS
+
+
+def attr_error(name: str):
+    """The message for a refused attribute (static and runtime checks)"""
+    return f"access to attribute '{name}' is not allowed"
 
 
 def _checked(name: Any) -> str:
@@ -127,9 +137,7 @@ def _checked(name: Any) -> str:
     if not isinstance(name, str):
         raise TypeError("attribute name must be a string")
     if not is_attr_allowed(name):
-        raise ForbiddenAttribute(
-            f"access to attribute '{name}' is not allowed"
-        )
+        raise ForbiddenAttribute(attr_error(name))
     return name
 
 
@@ -186,11 +194,17 @@ class _Checker(ast.NodeVisitor):
     def _bad(self, node: ast.AST, msg: str) -> None:
         self.problems.append(f"line {getattr(node, 'lineno', '?')}: {msg}")
 
+    def _check_names(self, node: ast.AST, name: str | None) -> None:
+        """Refuse dunder vairable names, except SAFE_DUNDERS."""
+        if name and is_dunder(name) and name not in SAFE_DUNDERS:
+            self._bad(node, f"name '{name}' is not allowed")
+
     def visit_Import(self, node: ast.Import) -> None:
         for alias in node.names:
             reason = check_import(alias.name, (), 0, self.allowlist)
             if reason:
                 self._bad(node, reason)
+            self._check_names(node, alias.asname)
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         names = [alias.name for alias in node.names]
@@ -199,6 +213,33 @@ class _Checker(ast.NodeVisitor):
         )
         if reason:
             self._bad(node, reason)
+        for alias in node.names:
+            self._check_names(node, alias.asname)
+
+    def visit_Attribute(self, node: ast.Attribute) -> None:
+        # attribute access, like `obj.name`
+        if not is_attr_allowed(node.attr):
+            self._bad(node, attr_error(node.attr))
+        self.generic_visit(node)
+
+    def visit_Name(self, node: ast.Name) -> None:
+        self._check_names(node, node.id)
+
+    def visit_Global(self, node: ast.Global) -> None:
+        for name in node.names:
+            self._check_names(node, name)
+
+    def visit_NonLocal(self, node: ast.NonLocal) -> None:
+        # variables in closest outer scope
+        for name in node.names:
+            self._check_names(node, name)
+
+    def visit_MatchClass(self, node: ast.MatchClass) -> None:
+        # `case C(attr=x)` reads C.attr without any Attribute node
+        for attr in node.kwd_attrs:
+            if not is_attr_allowed(attr):
+                self._bad(node, attr_error(attr))
+        self.generic_visit(node)
 
 
 def check_ast(tree: ast.AST, allowlist: list[str]) -> list[str]:
