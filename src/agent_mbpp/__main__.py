@@ -32,7 +32,7 @@ def main() -> int:
 
     args = CliArgs.parse("agent_mbpp")
     Display.set_debug_level(args.debug)
-    Display.debug("--- ON ---")
+    Display.debug(f"--- {Display.level.name} ---")
     try:
         solution = solve(args)
 
@@ -45,7 +45,7 @@ def main() -> int:
         return 1
 
     args.output.write_text(solution.model_dump_json(indent=2))
-    Display.debug(solution, "Solution", full=True)
+    Display.debug(solution, "Solution")
 
     Display.debug("--- END ---")
     return 0

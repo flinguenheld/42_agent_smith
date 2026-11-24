@@ -10,8 +10,8 @@ install_goinfre:
 	ln -s $(VENV_DIR) .venv
 	uv sync
 
-TASK   ?= mbpp_test/task_2_similar_elements.json
-# TASK   ?= mbpp_test/task_3_is_not_prime.json
+# TASK   ?= mbpp_test/task_2_similar_elements.json
+TASK   ?= mbpp_test/task_3_is_not_prime.json
 # TASK   ?= mbpp_test/task_4_heap_queue_largest.json
 OUTPUT ?= mbpp_test/solution.json
 
@@ -19,7 +19,8 @@ run_gemini:
 	uv run python -m agent_mbpp --task-file $(TASK) --output $(OUTPUT) \
 		--model-name gemini-3.5-flash-lite \
 		--provider-url https://generativelanguage.googleapis.com/v1beta/openai \
-		--debug steps
+		--debug on
+		# --debug full
 
 nvim:
 	uv run nvim .

@@ -39,7 +39,7 @@ src/
    ├─ cli.py       CliArgs: the flags, shared by every entry point
    ├─ agent/       the loop (think → extract → observe), budget, report
    ├─ llm/         LLMClient, Config (.env keys, base URL)
-   ├─ display/     Display (colors, debug levels), pretty_format
+   ├─ display/     Display (colors, debug levels, code blocks)
    ├─ sandbox/     D2's part
    └─ data.py · models.py
 ```

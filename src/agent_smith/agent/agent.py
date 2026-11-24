@@ -9,7 +9,7 @@ from agent_smith.agent.prompt import (
     build_task_message,
 )
 from agent_smith.agent.report import Report
-from agent_smith.data import MAX_ITERATIONS, DebugLevel
+from agent_smith.data import MAX_ITERATIONS
 from agent_smith.display import Display
 from agent_smith.llm.client import LLMClient, LLMClientError, LLMResponse
 from agent_smith.models import MBPPTaskInput, SolutionOutput
@@ -154,7 +154,7 @@ class Agent:
         """Save the step in the report and show it in debug mode."""
 
         step = self.report.add_step(response, code, observation)
-        Display.debug(step, f"Step {step.step}", DebugLevel.STEPS)
+        Display.debug(step, f"Step {step.step}")
 
     def _add_message(self, role: str, content: str) -> None:
         """Append one message to the conversation."""

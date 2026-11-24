@@ -42,7 +42,7 @@ class CliArgs:
         parser = cls._build_parser(prog)
         ns = parser.parse_args(argv)
         cls._check_paths(parser, ns)
-        debug = DebugLevel[ns.debug.upper()]  # "steps" → DebugLevel.STEPS
+        debug = DebugLevel[ns.debug.upper()]  # "on" → DebugLevel.ON
 
         return cls(
             ns.task_file, ns.output, ns.model_name, ns.provider_url, debug

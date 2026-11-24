@@ -69,7 +69,7 @@ uv run python -m agent_mbpp --task-file FILE --output FILE \
 --output FILE       where to write solution.json (the folder must exist)
 --model-name NAME   model of the provider, e.g. "llama-3.3-70b"
 --provider-url URL  base URL, e.g. "https://api.groq.com/openai/v1"
---debug LEVEL       off (default), summary, steps or full
+--debug LEVEL       off (default), on or full
 ```
 
 Shortcut with Gemini (`TASK` and `OUTPUT` are optional):

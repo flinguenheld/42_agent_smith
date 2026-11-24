@@ -35,9 +35,11 @@ class DebugLevel(IntEnum):
     """How much debug output to print; each level includes the lower ones."""
 
     OFF = 0  # nothing
-    SUMMARY = 1  # config, final SolutionOutput
-    STEPS = 2  # + one short line per step
-    FULL = 3  # + every field of each model
+    ON = 1  # each step, final SolutionOutput
+    FULL = 2  # + long fields (llm_output, system_prompt)
+
+
+CODE_THEME = "monokai"  # Pygments style for code in Display.debug
 
 
 # ------------------------------------------------------------- LLM CLIENT ----

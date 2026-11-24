@@ -1,9 +1,20 @@
-from pydantic import BaseModel
-from rich.console import Console
+from typing import Protocol
 
-from agent_smith.data import DebugLevel
-from agent_smith.display.pretty import pretty_format
+from rich.console import Console
+from rich.rule import Rule
+from rich.syntax import Syntax
+
+from agent_smith.data import CODE_THEME, DebugLevel
 from agent_smith.display.progress import TaskProgress
+from agent_smith.models import DebugView
+
+
+class Viewable(Protocol):
+    """Anything Display.debug can show: it has a debug_view method."""
+
+    def debug_view(self, level: DebugLevel) -> DebugView:
+        """Return the text and code to show at this debug level."""
+        ...
 
 
 class Display:
@@ -42,25 +53,38 @@ class Display:
         """Print an information message in green on stdout."""
         cls._out.print(message, style="green")
 
+    # --------------------------------------------------------------- CODE ----
+    @classmethod
+    def _syntax(cls, code: str) -> Syntax:
+        """Return code as colored Python with line numbers."""
+        code = code.rstrip()  # no empty numbered line at the end
+        return Syntax(code, "python", theme=CODE_THEME, line_numbers=True)
+
     # -------------------------------------------------------------- DEBUG ----
     @classmethod
     def debug(
         cls,
-        message: str | BaseModel | None,
+        message: str | Viewable | None,
         title: str = "Debug",
-        level: DebugLevel = DebugLevel.SUMMARY,
-        full: bool = False,
+        level: DebugLevel = DebugLevel.ON,
     ) -> None:
         """Print message in magenta on stderr if level <= Display.level.
 
-        A model is shown as its summary, or with all its fields if full is
-        True or at FULL level.
+        A string is shown on one titled line. A model is shown through its
+        debug_view, between two rules: text, colored code, then output.
         """
 
         if level > cls.level or not message:
             return
+        if isinstance(message, str):
+            cls._print_line(title, message)
+        else:
+            cls._print_block(title, message.debug_view(cls.level))
 
-        text = cls._to_text(message, full)
+    @classmethod
+    def _print_line(cls, title: str, text: str) -> None:
+        """Print text after "title  ->"; later lines are aligned under it."""
+
         prefix = f"     {title}  -> "
         blank = " " * len(prefix)
         first, *rest = text.splitlines()
@@ -71,11 +95,18 @@ class Display:
         cls._err.print()
 
     @classmethod
-    def _to_text(cls, message: str | BaseModel, full: bool) -> str:
-        """Return message as text: a model's summary, or all its fields."""
+    def _print_block(cls, title: str, view: DebugView) -> None:
+        """Print a view between two rules: text, code, then its output."""
 
-        if isinstance(message, str):
-            return message
-        if full or cls.level >= DebugLevel.FULL:
-            return pretty_format(message.model_dump())
-        return str(message)
+        cls._err.print(Rule(title, style="magenta"))
+        cls._err.print(view.text, style="magenta")
+        if view.code.strip():
+            cls._err.print()
+            cls._err.print(cls._syntax(view.code))
+        if view.output.strip():
+            cls._err.print()
+            cls._err.print("Output:", style="magenta")
+            for line in view.output.rstrip().splitlines():
+                cls._err.print(f"  {line}")  # default color: not ours
+        cls._err.print(Rule(style="magenta"))
+        cls._err.print()  # blank line before the next block
