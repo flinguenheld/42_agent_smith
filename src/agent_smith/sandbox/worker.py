@@ -28,6 +28,7 @@ from typing import IO, Any, Literal, Protocol
 
 from . import protocol as p
 from .config import SandboxConfig
+from .policy import SandboxPolicy
 from .result import Status
 
 _THIS_FILE = os.path.realpath(__file__)
@@ -268,8 +269,7 @@ def main(parent_pid: int) -> None:
     if not isinstance(init, p.Init):
         os._exit(2)
     cfg = SandboxConfig(**init.config)
-    policy: Policy = NoPolicy(cfg)  # later: policy.SandboxPolicy(cfg)
-
+    policy: Policy = SandboxPolicy(cfg)
     ns = _build_namespace(chan, policy, init.tool_names)
     out = _StreamToParent(chan, "stdout")
     err = _StreamToParent(chan, "stderr")
