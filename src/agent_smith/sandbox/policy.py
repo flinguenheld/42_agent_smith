@@ -16,6 +16,7 @@ import ast
 import builtins as _builtins
 import contextlib
 import os
+import sys
 from collections.abc import Callable, Iterable, Iterator
 from types import ModuleType
 from typing import Any, NoReturn
@@ -28,31 +29,18 @@ from agent_smith.data import (
     SAFE_DUNDERS,
 )
 
+from agent_smith.sandbox.errors import (
+    SandboxViolation,
+    ForbiddenImport,
+    ForbiddenAttribute,
+    ForbiddenPath,
+    ForbiddenOperation,
+)
+
 from agent_smith.sandbox.config import SandboxConfig
 from agent_smith.sandbox.paths import is_path_allowed, real_path
 from agent_smith.sandbox.limits import apply_limits
-
-# --------------------------------------------------------------------- errors
-
-
-class SandboxViolation(Exception):
-    """Base class: the sandboxed code tries something forbidden."""
-
-
-class ForbiddenImport(SandboxViolation, ImportError):
-    """Also an ImportError, so `try: import x / except ImportError:` works."""
-
-
-class ForbiddenAttribute(SandboxViolation, AttributeError):
-    pass
-
-
-class ForbiddenPath(SandboxViolation, PermissionError):
-    pass
-
-
-class ForbiddenOperation(SandboxViolation, RuntimeError):
-    pass
+from agent_smith.sandbox.audit import AuditHook
 
 
 # -------------------------------------------------------------------- imports
@@ -348,6 +336,7 @@ class SandboxPolicy:
 
     def lock_down(self) -> None:
         apply_limits(self.cfg.max_memory_mb)
+        sys.addaudithook(AuditHook(self.cfg.allowed_directories, self.check))
 
     @contextlib.contextmanager
     def trusted(self) -> Iterator[None]:

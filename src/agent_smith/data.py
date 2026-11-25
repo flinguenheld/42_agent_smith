@@ -118,3 +118,44 @@ DENIED_MODULE_ATTRS: dict[str, frozenset[str]] = {
 
 MAX_FILE_BYTES = 64 * 1024 * 1024
 MAX_OPEN_FILES = 64
+
+# Audit hook (PEP 578): events refused whatever code asks for them
+AUDIT_DENIED_EVENTS = (  # prefixes: "os.exec" covers os.execv, os.execve...
+    "os.system",  # processes
+    "os.exec",
+    "os.posix_spawn",
+    "os.spawn",
+    "os.fork",
+    "os.forkpty",
+    "os.kill",
+    "os.killpg",
+    "subprocess.",
+    "pty.",
+    "socket."  # network: urllib, http, ftplib... all go through socket
+    "ctypes."  # native code would bypass the hook
+    "sys.settrace",
+    "sys.setprofile",
+    "sys._current_frames",
+    "sys.addaudithook",  # no second hook that could hide events
+    "code.__new__",
+    "function.__new__",  # hand-made code objects
+    "gc.get_",  # gc.get_objects(): every object in the process
+)
+AUDIT_READ_EVENTS = frozenset({"os.listdir", "os.scandir"})
+AUDIT_WRITE_EVENTS = frozenset(
+    {
+        "os.remove",
+        "os.rename",
+        "os.mkdir",
+        "os.rmdir",
+        "os.chmod",
+        "os.chown",
+        "os.link",
+        "os.symlink",
+        "os.utime",
+        "shutil.rmtree",
+    }
+)
+# Filenames the sandbox gives to the code it compiles: "<sandbox-3> for the
+# 3rd run (in tracebacks), "<sandbox-policy>" for the hook's own parse
+SANDBOX_FILENAME_PREFIX = "<sandbox-"

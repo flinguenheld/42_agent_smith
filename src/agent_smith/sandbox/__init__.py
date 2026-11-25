@@ -7,7 +7,11 @@ src/agent_smith/sandbox/
 ├── protocol.py   JSON Lines messages between host and worker
 ├── host.py       parent side: start, deadline, kill, tool relay
 ├── worker.py     child side: runs the code through a Policy
-└── policy.py     the security rules (SandboxPolicy)
+├── policy.py     the security rules (SandboxPolicy)
+├── errors.py     SandboxViolation and the Forbidden* exceptions
+├── paths.py      is the path inside an allowed directory?
+├── limits.py     setrlimit: memory, processes, file size
+└── audit.py      audit hook: network, files, processes, compile
 """
 
 from .config import SandboxConfig, SandboxConfigError
