@@ -81,3 +81,8 @@ FORBIDDEN_ATTRS = frozenset({
     "f_back", "f_builtins", "f_code", "f_globals", "f_locals",  # frames
     "f_trace", "tb_frame", "tb_next",  # frames, tracebacks
 })
+
+DENIED_MODULE_ATTRS: dict[str, frozenset[str]] = {
+    "operator": frozenset({"attrgetter", "methodcaller"}),
+    "string": frozenset({"Formatter"}),
+}

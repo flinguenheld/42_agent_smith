@@ -20,6 +20,7 @@ from typing import Any, NoReturn
 
 from ..data import (
     BLOCKED_BUILTINS,
+    DENIED_MODULE_ATTRS,
     FORBIDDEN_ATTRS,
     HIDDEN_BUILTINS,
     SAFE_DUNDERS,
@@ -92,6 +93,51 @@ def check_import(
         )
     return None
 
+def module_view(
+        mod: ModuleType, allowlist: list[str], cache: dict[str, ModuleType]
+) -> ModuleType:
+    """A new module holding only the safe names of mod.
+
+    Like safe_builtins: the real module is left untouched, user code gets
+    a filtered copy. Skipped: private names (random._os) and modules not
+    on the allowlist (typing.sys). DENIED_MODULE_ATTRS become stubs.
+    Allowed sub-modules (collections.abc) are views too.
+    """
+    if mod.__name__ in cache:
+        return cache[mod.__name__]
+    view = ModuleType(mod.__name__, mod.__doc__)
+    cache[mod.__name__] = view
+    denied = DENIED_MODULE_ATTRS.get(mod.__name__, frozenset())
+    for name, value in vars(mod).items():
+        if name.startswith("_"):
+            continue
+        if name in denied:
+            value = _blocked(f"{mod.__name__}.{name}")
+        elif isinstance(value, ModuleType):
+            if not is_import_allowed(value.__name__, allowlist):
+                continue
+            value = module_view(value, allowlist, cache)
+        setattr(view, name, value)
+    return view
+
+
+def _check_fromlist(
+    view: ModuleType, real: ModuleType, fromlist: Iterable[str]
+) -> None:
+    """`from m import a, b`: fail now if a or b is not in the view.
+
+    Otherwise Python retries with sys.modules["m.a"] and hands out the
+    real, unfiltered module.
+    """
+    for attr in fromlist:
+        if hasattr(view, attr):
+            continue
+        if hasattr(real, attr):
+            raise ForbiddenImport(f"'{real.__name__}.{attr}' is not allowed")
+        raise ImportError(
+            f"cannot import name '{attr}' from '{real.__name__}'"
+        )
+
 
 def make_import(allowlist: list[str]) -> Callable[..., Any]:
     """Build the __import__ that user code gets in its builtins."""
@@ -107,7 +153,10 @@ def make_import(allowlist: list[str]) -> Callable[..., Any]:
         reason = check_import(name, fromlist or (), level, allowlist)
         if reason:
             raise ForbiddenImport(reason)
-        return real_import(name, globals, locals, fromlist, level)
+        real = real_import(name, globals, locals, fromlist, level)
+        view = module_view(real, allowlist, cache)
+        _check_fromlist(view, real, fromlist or ())
+        return view
 
     return safe_import
 
@@ -172,12 +221,14 @@ def safe_builtins(cfg: SandboxConfig) -> dict[str, Any]:
         k: v for k, v in vars(_builtins).items() if k not in HIDDEN_BUILTINS
     }
     safe.update({name: _blocked(name) for name in BLOCKED_BUILTINS})
-    safe.update({
-        "__import__": make_import(cfg.authorized_imports),
-        "getattr": safe_getattr,
-        "setattr": safe_setattr,
-        "delattr": safe_delattr,
-    })
+    safe.update(
+        {
+            "__import__": make_import(cfg.authorized_imports),
+            "getattr": safe_getattr,
+            "setattr": safe_setattr,
+            "delattr": safe_delattr,
+        }
+    )
     return safe
 
 
