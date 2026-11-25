@@ -260,5 +260,5 @@ def main(parent_pid: int) -> None:
         if not isinstance(msg, p.Exec):
             os._exit(2)
         with redirect_stdout(out), redirect_stderr(err):
-            done = _run(msg.code, ns, policy, f"{SANDBOX_FILENAME_PREFIX}-{n}>")
+            done = _run(msg.code, ns, policy, f"{SANDBOX_FILENAME_PREFIX}{n}>")
         chan.send(done)
