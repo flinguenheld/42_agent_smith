@@ -12,7 +12,6 @@ picks it instead. Nothing else in this file has to change.
 from __future__ import annotations
 
 import ast
-import builtins
 import contextlib
 import io
 import itertools

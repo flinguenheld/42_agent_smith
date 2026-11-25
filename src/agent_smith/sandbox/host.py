@@ -83,7 +83,7 @@ class _OutputBuffer:
             self.head += data[:take]
             data = data[take:]
         if data:
-            self.tail = (self.tail + data)[-self.half :]
+            self.tail = (self.tail + data)[-self.half:]
 
     def text(self) -> tuple[str, bool]:
         kept = len(self.head) + len(self.tail)

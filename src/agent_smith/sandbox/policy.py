@@ -15,10 +15,12 @@ from __future__ import annotations
 import ast
 import builtins as _builtins
 import contextlib
+import os
 from collections.abc import Callable, Iterable, Iterator
+from types import ModuleType
 from typing import Any, NoReturn
 
-from ..data import (
+from agent_smith.data import (
     BLOCKED_BUILTINS,
     DENIED_MODULE_ATTRS,
     FORBIDDEN_ATTRS,
@@ -26,7 +28,9 @@ from ..data import (
     SAFE_DUNDERS,
 )
 
-from .config import SandboxConfig
+from agent_smith.sandbox.config import SandboxConfig
+from agent_smith.sandbox.paths import is_path_allowed, real_path
+from agent_smith.sandbox.limits import apply_limits
 
 # --------------------------------------------------------------------- errors
 
@@ -93,8 +97,9 @@ def check_import(
         )
     return None
 
+
 def module_view(
-        mod: ModuleType, allowlist: list[str], cache: dict[str, ModuleType]
+    mod: ModuleType, allowlist: list[str], cache: dict[str, ModuleType]
 ) -> ModuleType:
     """A new module holding only the safe names of mod.
 
@@ -142,6 +147,7 @@ def _check_fromlist(
 def make_import(allowlist: list[str]) -> Callable[..., Any]:
     """Build the __import__ that user code gets in its builtins."""
     real_import = _builtins.__import__
+    cache: dict[str, ModuleType] = {}
 
     def safe_import(
         name: str,
@@ -176,7 +182,7 @@ def is_attr_allowed(name: str) -> bool:
     return name not in FORBIDDEN_ATTRS
 
 
-def attr_error(name: str):
+def attr_error(name: str) -> str:
     """The message for a refused attribute (static and runtime checks)"""
     return f"access to attribute '{name}' is not allowed"
 
@@ -215,6 +221,28 @@ def _blocked(name: str) -> Callable[..., NoReturn]:
     return blocked
 
 
+def make_open(allowed_dirs: list[str]) -> Callable[..., Any]:
+    """Build the open() that user code gets: allowed directories only."""
+    real_open = _builtins.open
+
+    def safe_open(
+        file: Any, mode: str = "r", *args: Any, **kwargs: Any
+    ) -> Any:
+        if not isinstance(file, (str, bytes, os.PathLike)):
+            raise ForbiddenPath("open() only accepts a path")
+        if "opener" in kwargs or len(args) >= 6:
+            raise ForbiddenPath("open(opener=...) is not allowed")
+        path = real_path(file)
+        if not is_path_allowed(path, allowed_dirs):
+            raise ForbiddenPath(
+                f"access to '{path}' is denied "
+                f"(allowed directories: {', '.join(allowed_dirs)})"
+            )
+        return real_open(path, mode, *args, **kwargs)
+
+    return safe_open
+
+
 def safe_builtins(cfg: SandboxConfig) -> dict[str, Any]:
     """The __builtins__ dict given to user code."""
     safe = {
@@ -224,6 +252,7 @@ def safe_builtins(cfg: SandboxConfig) -> dict[str, Any]:
     safe.update(
         {
             "__import__": make_import(cfg.authorized_imports),
+            "open": make_open(cfg.allowed_directories),
             "getattr": safe_getattr,
             "setattr": safe_setattr,
             "delattr": safe_delattr,
@@ -280,7 +309,7 @@ class _Checker(ast.NodeVisitor):
         for name in node.names:
             self._check_names(node, name)
 
-    def visit_NonLocal(self, node: ast.NonLocal) -> None:
+    def visit_Nonlocal(self, node: ast.Nonlocal) -> None:
         # variables in closest outer scope
         for name in node.names:
             self._check_names(node, name)
@@ -318,7 +347,7 @@ class SandboxPolicy:
         return safe_builtins(self.cfg)
 
     def lock_down(self) -> None:
-        pass
+        apply_limits(self.cfg.max_memory_mb)
 
     @contextlib.contextmanager
     def trusted(self) -> Iterator[None]:

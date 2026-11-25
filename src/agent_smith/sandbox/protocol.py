@@ -111,7 +111,7 @@ def decode_from_child(line: bytes) -> Any:
     return _decode(line, _to_parent)
 
 
-def send(stream: IO[bytes], msg: _Msg) -> Any | None:
+def send(stream: IO[bytes], msg: _Msg) -> None:
     stream.write(encode(msg))
     stream.flush()
 
