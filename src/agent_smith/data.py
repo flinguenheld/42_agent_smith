@@ -131,8 +131,8 @@ AUDIT_DENIED_EVENTS = (  # prefixes: "os.exec" covers os.execv, os.execve...
     "os.killpg",
     "subprocess.",
     "pty.",
-    "socket."  # network: urllib, http, ftplib... all go through socket
-    "ctypes."  # native code would bypass the hook
+    "socket.",  # network: urllib, http, ftplib... all go through socket
+    "ctypes.",  # native code would bypass the hook
     "sys.settrace",
     "sys.setprofile",
     "sys._current_frames",

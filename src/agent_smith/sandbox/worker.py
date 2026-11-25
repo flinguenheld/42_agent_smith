@@ -26,6 +26,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from typing import IO, Any, Literal, Protocol
 
 from . import protocol as p
+from ..data import SANDBOX_FILENAME_PREFIX
 from .config import SandboxConfig
 from .policy import SandboxPolicy
 from .result import Status
@@ -259,5 +260,5 @@ def main(parent_pid: int) -> None:
         if not isinstance(msg, p.Exec):
             os._exit(2)
         with redirect_stdout(out), redirect_stderr(err):
-            done = _run(msg.code, ns, policy, f"<sandbox-{n}>")
+            done = _run(msg.code, ns, policy, f"{SANDBOX_FILENAME_PREFIX}-{n}>")
         chan.send(done)

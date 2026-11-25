@@ -35,6 +35,24 @@ imports and attributes (`policy.check_ast`). See [NodeVisitor](#nodevisitor).
 
 ---
 
+### Audit hook
+
+A function given to Python with `sys.addaudithook(hook)` (PEP 578). Python calls it
+**before** each sensitive operation: opening a file, a socket, `os.system`,
+compiling code... The hook gets the event name and its arguments, and can cancel the
+operation by raising an exception. It sees the **operation**, not how the code got
+there.
+
+```text
+os.system("ls") ──► hook("os.system", (b"ls",)) ── raises ──► command never runs
+```
+
+A hook can't be removed. The worker installs one in `lock_down()`
+(`sandbox/audit.py`): no network, no processes, files only in the allowed
+directories, and code compiled from a string must pass the [AST](#ast) check.
+
+---
+
 ### Builtins
 
 The names Python finds without importing anything: `len`, `print`, `open`, `eval`...
@@ -47,17 +65,31 @@ checked versions.
 
 ---
 
+### Circular import
+
+Two modules that import each other: `a.py` imports `b.py`, which imports `a.py`.
+Python stops with an `ImportError` or a half-loaded module. The fix is a one-way
+chain, by moving the shared part to a third module.
+
+```text
+before:  policy ──► audit ──► policy        ✗
+after:   errors ◄── audit ◄── policy        ✓  (errors.py imports nothing)
+```
+
+---
+
 ### Defense in depth
 
 Several independent security layers, each one assuming the previous one can fail. In
 the sandbox:
 
 ```text
-1. static AST check     imports, dunders              policy.check_ast
-2. filtered builtins    no eval/exec, safe getattr    policy.safe_builtins
-3. module proxy         safe module attributes        (to do)
-4. OS limits            memory, processes, audit      (to do)
-   + separate process   can be killed, no API keys
+1. static AST check     imports, dunders, frames      policy.check_ast
+2. filtered builtins    no eval/exec, safe open...    policy.safe_builtins
+3. module views         no random._os, no typing.sys  policy.module_view
+4. OS limits            memory, processes, file size  limits.py
+5. audit hook           network, files, compile       audit.py
+   + separate process   can be killed, no API keys    host.py
 ```
 
 ---
@@ -207,6 +239,17 @@ Compare with [SWE-bench](#swe-bench), the hard benchmark.
 
 ---
 
+### Module view
+
+The filtered copy of a module that the sandbox gives to the LLM's code
+(`policy.module_view`). It holds only the module's public names: no private names
+(`random._os`) and no sub-modules outside the allowlist (`typing.sys`).
+
+The real module is never changed, because the libraries and the worker share it.
+This is the same idea as the filtered [builtins](#builtins).
+
+---
+
 ### Namespace
 
 A dict from names to values. Python looks a name up in this order: **L**ocal
@@ -231,6 +274,21 @@ Two traps:
 
 - A misnamed method (`visit_ast_import`) is **silently never called**.
 - A `visit_X` that doesn't call `self.generic_visit(node)` never looks inside the node.
+
+---
+
+### Object graph
+
+In Python, every object holds references to other objects: a module to what it
+imported, a function to its module's globals, an object to its class. Code that
+holds one object can follow these links to many others.
+
+```text
+random ──_os──► os ──system──► runs a shell command
+```
+
+This is why the sandbox checks *what* code can reach, not only *what it imports*. See
+[Dunder](#dunder) and [Module view](#module-view).
 
 ---
 
@@ -261,6 +319,17 @@ src/                   ← just a box, not imported
 
 ---
 
+### Path traversal
+
+Reaching a file outside an allowed folder with a path that *looks* inside it:
+`/testbed/../etc/passwd`, or a symlink in `/testbed` pointing outside.
+
+The sandbox resolves the path first (`os.path.realpath`), then compares whole path
+components (`os.path.commonpath`). A plain `startswith("/testbed")` would also
+accept `/testbed2/...`. See `sandbox/paths.py`.
+
+---
+
 ### Pipe
 
 A one-way channel between two processes: one writes, the other reads. It carries
@@ -283,6 +352,18 @@ can always be killed, and it can't read its parent's memory.
 
 The sandbox runs the LLM's code in a subprocess, the worker, so an infinite loop can
 be killed and the API keys stay in the parent.
+
+---
+
+### rlimit
+
+A limit the operating system enforces on one process: memory, number of processes,
+file size, open files... Set with `resource.setrlimit`. Each has a **soft** limit
+(enforced) and a **hard** one (the ceiling). A process can lower both but never raise
+the hard one again.
+
+The worker sets them in `lock_down()` (`sandbox/limits.py`). Over the memory limit,
+Python raises `MemoryError`, reported as `MEMORY`.
 
 ---
 
@@ -315,6 +396,15 @@ sent to the host as messages.
 ### SWE-bench
 
 *(to be completed)*: the hard benchmark, which fixes real bugs in real GitHub repositories.
+
+---
+
+### TOCTOU
+
+*Time Of Check to Time Of Use.* A gap between checking something and using it: the
+path is checked, then a symlink is swapped in before the file is opened. The safe
+`open()` reduces it by opening the exact path it checked (already resolved), not the
+one it was given.
 
 ---
 
