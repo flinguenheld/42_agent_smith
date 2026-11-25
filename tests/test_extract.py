@@ -3,7 +3,7 @@
 The stop sequences already removed "<end_code>", so replies end with ```.
 """
 
-from agent_smith.extract import extract_code
+from agent_smith.agent.extract import extract_code
 
 FENCE = "```"
 

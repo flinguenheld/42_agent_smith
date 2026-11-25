@@ -45,3 +45,13 @@ print sbx.get_stderr()
 Should look smth like this ig
 
 needs proper signals handling, no idea what that is
+
+TO CLARIFY IN A GLOSSARY:
+
+subprocesses
+pipes with stdin/out redirection
+exec, why it's good and why it's bad
+ast and every node type visited in policy
+import, \_\_import\_\_, their builtin implementation and signature and what is done here (what is fromlist ?)
+globals, locals, namespaces, how they are dangerous and handled here
+dangerous dunders and attributes

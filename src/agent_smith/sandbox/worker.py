@@ -28,6 +28,7 @@ from typing import IO, Any, Literal, Protocol
 
 from . import protocol as p
 from .config import SandboxConfig
+from .policy import SandboxPolicy
 from .result import Status
 
 _THIS_FILE = os.path.realpath(__file__)
@@ -55,28 +56,6 @@ class Policy(Protocol):
     def lock_down(self) -> None: ...
 
     def trusted(self) -> contextlib.AbstractContextManager[None]: ...
-
-
-class NoPolicy:
-    """Allows everything. Placeholder until policy.py is written."""
-
-    violations: tuple[type[BaseException], ...] = ()
-
-    def __init__(self, cfg: SandboxConfig) -> None:
-        self.cfg = cfg
-
-    def check(self, tree: ast.Module) -> list[str]:
-        return []
-
-    def builtins(self) -> dict[str, Any]:
-        return dict(vars(builtins))
-
-    def lock_down(self) -> None:
-        pass
-
-    @contextlib.contextmanager
-    def trusted(self) -> Iterator[None]:
-        yield
 
 
 # ----------------------------------------------------------------- channel
@@ -268,8 +247,7 @@ def main(parent_pid: int) -> None:
     if not isinstance(init, p.Init):
         os._exit(2)
     cfg = SandboxConfig(**init.config)
-    policy: Policy = NoPolicy(cfg)  # later: policy.SandboxPolicy(cfg)
-
+    policy: Policy = SandboxPolicy(cfg)
     ns = _build_namespace(chan, policy, init.tool_names)
     out = _StreamToParent(chan, "stdout")
     err = _StreamToParent(chan, "stderr")
