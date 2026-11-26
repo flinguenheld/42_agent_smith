@@ -53,6 +53,15 @@ class Display:
         """Print an information message in green on stdout."""
         cls._out.print(message, style="green")
 
+    # ------------------------------------------------------------- OUTPUT ----
+    @classmethod
+    def output(cls, text: str, ok: bool = True) -> None:
+        """Print text on stdout as it is: default color, or red if not ok.
+
+        emoji=False: user output like ":fire:" must not become an emoji.
+        """
+        cls._out.print(text, style=None if ok else "red", emoji=False)
+
     # --------------------------------------------------------------- CODE ----
     @classmethod
     def _syntax(cls, code: str) -> Syntax:
