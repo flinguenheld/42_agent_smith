@@ -159,3 +159,22 @@ AUDIT_WRITE_EVENTS = frozenset(
 # Filenames the sandbox gives to the code it compiles: "<sandbox-3> for the
 # 3rd run (in tracebacks), "<sandbox-policy>" for the hook's own parse
 SANDBOX_FILENAME_PREFIX = "<sandbox-"
+
+# -------------------------------------------------------------- MCP CLIENT ---
+# One session: start the server, handshake, one request. Tools are not
+# under the sandbox timeout, but a stuck server must not block the agent.
+MCP_CALL_TIMEOUT_S = 120.0
+# Our MBPP server, at the repo root (the subject wants it there)
+MBPP_SERVER_SCRIPT = "mcp_tools_mbpp.py"
+
+# -------------------------------------------------------------- MCP MANUAL ---
+# JSON Schema type -> Python type, as the LLM reads it in the manual
+JSON_TO_PYTHON = {
+    "string": "str",
+    "integer": "int",
+    "number": "float",
+    "boolean": "bool",
+    "object": "dict",
+    "array": "list",
+    "null": "None",
+}

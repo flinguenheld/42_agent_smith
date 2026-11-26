@@ -6,7 +6,9 @@ text is sent and builds the messages list.
 
 from agent_smith.models import MBPPTaskInput
 
-SYSTEM_PROMPT = '''\
+# {manual} is filled by build_system_prompt() with the sandbox manual:
+# the tools of the connected MCP server, then final_answer.
+SYSTEM_PROMPT_TEMPLATE = '''\
 You are an expert Python programmer. You solve one coding task by
 writing code that is executed for you.
 
@@ -21,12 +23,9 @@ Rules:
 - Use print() to see values. The output is sent back to you as
   "Observation:". Never write an Observation yourself.
 - Test your solution before you submit it.
+- Submit with final_answer(answer=<your function code as a string>).
 
-Functions you can call in your code:
-- run_tests(code: str, test_list: list[str]) -> str
-  Runs the tests against your code and returns the results.
-- final_answer(code: str)
-  Submits your final function code and ends the task.
+{manual}
 
 Example:
 Thought: I'll write the function, then test it.
@@ -35,8 +34,15 @@ code = """
 def add(a, b):
     return a + b
 """
-print(run_tests(code, ["assert add(1, 2) == 3"]))
+print(run_tests(code=code, test_list=["assert add(1, 2) == 3"]))
 ```<end_code>'''
+
+
+def build_system_prompt(manual: str) -> str:
+    """The system prompt, with the sandbox manual in it."""
+
+    return SYSTEM_PROMPT_TEMPLATE.format(manual=manual)
+
 
 NO_CODE_MESSAGE = (
     "No valid code block found. Answer with one ```python block, "

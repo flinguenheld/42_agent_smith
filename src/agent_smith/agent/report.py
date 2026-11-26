@@ -1,4 +1,3 @@
-from agent_smith.agent.prompt import SYSTEM_PROMPT
 from agent_smith.data import BENCHMARK
 from agent_smith.llm.client import LLMResponse
 from agent_smith.models import SolutionOutput, StepMetrics
@@ -11,8 +10,8 @@ class Report:
         self,
         api_url: str,
         model_name: str,
+        system_prompt: str,
         benchmark: str = BENCHMARK,
-        system_prompt: str = SYSTEM_PROMPT,
     ) -> None:
         self.api_url = api_url
         self.model_name = model_name

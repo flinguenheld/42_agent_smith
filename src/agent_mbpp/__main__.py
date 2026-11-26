@@ -1,14 +1,19 @@
+import shlex
 import sys
 
 from pydantic import ValidationError
 
 from agent_smith.agent import Agent, progress_bars
+from agent_smith.agent.prompt import build_system_prompt
 from agent_smith.cli import CliArgs
+from agent_smith.data import MBPP_SERVER_SCRIPT
 from agent_smith.display import Display
 from agent_smith.llm.client import LLMClient
 from agent_smith.llm.config import Config, ConfigError
 from agent_smith.models import MBPPTaskInput, SolutionOutput
 from agent_smith.sandbox import Sandbox
+from agent_smith.sandbox.manual import build_manual
+from agent_smith.sandbox.mcp_client import McpClient, McpClientError
 
 
 def solve(args: CliArgs) -> SolutionOutput:
@@ -17,8 +22,13 @@ def solve(args: CliArgs) -> SolutionOutput:
     task = MBPPTaskInput.model_validate_json(args.task_file.read_text())
     config = Config(args.provider_url, args.model_name)
 
-    with Sandbox() as sandbox:
-        agent = Agent(LLMClient(config), sandbox, task)
+    # sys.executable: the server runs with our venv's Python.
+    mcp = McpClient(shlex.join([sys.executable, MBPP_SERVER_SCRIPT]))
+    tools = mcp.list_tools()
+    prompt = build_system_prompt(build_manual(tools))
+
+    with Sandbox(tools=mcp.tool_handlers(tools)) as sandbox:
+        agent = Agent(LLMClient(config), sandbox, task, prompt)
 
         with progress_bars(agent):
             return agent.solve()
@@ -42,6 +52,10 @@ def main() -> int:
 
     except ConfigError as err:
         Display.error("CONFIG", str(err))
+        return 1
+
+    except McpClientError as err:
+        Display.error("MCP", str(err))
         return 1
 
     args.output.write_text(solution.model_dump_json(indent=2))

@@ -5,7 +5,6 @@ from agent_smith.agent.deadline import Deadline
 from agent_smith.agent.extract import extract_code
 from agent_smith.agent.prompt import (
     NO_CODE_MESSAGE,
-    SYSTEM_PROMPT,
     build_task_message,
 )
 from agent_smith.agent.report import Report
@@ -45,11 +44,13 @@ class Agent:
         client: LLMClient,
         sandbox: Sandbox,
         task: MBPPTaskInput,
+        system_prompt: str,
         max_iterations: int = MAX_ITERATIONS,
     ) -> None:
         self.client = client
         self.sandbox = sandbox
         self.task = task
+        self.system_prompt = system_prompt
         self.max_iterations = max_iterations
         self.iteration = 0
         self.messages: list[dict[str, str]] = []
@@ -63,7 +64,7 @@ class Agent:
 
         self.deadline = Deadline()
         self.messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": self.system_prompt},
             {"role": "user", "content": build_task_message(self.task)},
         ]
         self.budget = TokenBudget()
@@ -78,7 +79,8 @@ class Agent:
     def _new_report(self) -> Report:
         """Return an empty Report for the client's endpoint."""
 
-        return Report(self.client.config.url, self.client.config.model_name)
+        config = self.client.config
+        return Report(config.url, config.model_name, self.system_prompt)
 
     # --------------------------------------------------------------- LOOP ----
     def _loop(self) -> tuple[str | None, str | None]:
