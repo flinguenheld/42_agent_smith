@@ -156,6 +156,6 @@ AUDIT_WRITE_EVENTS = frozenset(
         "shutil.rmtree",
     }
 )
-# Filenames the sandbox gives to the code it compiles: "<sandbox-3> for the
+# Filenames the sandbox gives to the code it compiles: "<sandbox-3>" for the
 # 3rd run (in tracebacks), "<sandbox-policy>" for the hook's own parse
 SANDBOX_FILENAME_PREFIX = "<sandbox-"

@@ -25,11 +25,11 @@ from collections.abc import Iterator
 from contextlib import redirect_stderr, redirect_stdout
 from typing import IO, Any, Literal, Protocol
 
-from . import protocol as p
-from ..data import SANDBOX_FILENAME_PREFIX
-from .config import SandboxConfig
-from .policy import SandboxPolicy
-from .result import Status
+from agent_smith.sandbox import protocol as p
+from agent_smith.data import SANDBOX_FILENAME_PREFIX
+from agent_smith.sandbox.config import SandboxConfig
+from agent_smith.sandbox.policy import SandboxPolicy
+from agent_smith.sandbox.result import Status
 
 _THIS_FILE = os.path.realpath(__file__)
 
@@ -238,6 +238,18 @@ def _run(
     return _done(Status.OK)
 
 
+def _die_with_parent(parent_pid: int) -> None:
+    """Linux: SIGKILL this process when its parent dies, even if busy."""
+    try:
+        import ctypes
+
+        ctypes.CDLL(None).prctl(1, signal.SIGKILL)  # 1 = PR_SET_PDEATHSIG
+    except (OSError, AttributeError):
+        pass  # not Linux: rely on EOF on stdin
+    if os.getppid() != parent_pid:  # parent died before prctl
+        os._exit(0)
+
+
 def main(parent_pid: int) -> None:
     signal.signal(signal.SIGINT, signal.SIG_IGN)  # Ctrl+C is the host's job
     sys.dont_write_bytecode = True
@@ -251,6 +263,7 @@ def main(parent_pid: int) -> None:
     ns = _build_namespace(chan, policy, init.tool_names)
     out = _StreamToParent(chan, "stdout")
     err = _StreamToParent(chan, "stderr")
+    _die_with_parent(parent_pid)
 
     policy.lock_down()  # irreversible restrictions go here, before Ready
     chan.send(p.Ready())

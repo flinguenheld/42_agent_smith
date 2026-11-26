@@ -19,8 +19,8 @@ from ..data import (
     AUDIT_WRITE_EVENTS,
     SANDBOX_FILENAME_PREFIX,
 )
-from .errors import ForbiddenOperation, ForbiddenPath
-from .paths import is_path_allowed
+from agent_smith.sandbox.errors import ForbiddenOperation, ForbiddenPath
+from agent_smith.sandbox.paths import is_path_allowed
 
 _CHECK_FILENAME = SANDBOX_FILENAME_PREFIX + "policy>"
 _WRITE_FLAGS = os.O_WRONLY | os.O_RDWR | os.O_APPEND | os.O_CREAT | os.O_TRUNC

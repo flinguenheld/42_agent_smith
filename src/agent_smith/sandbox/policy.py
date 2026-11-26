@@ -4,10 +4,10 @@ The worker only talks to SandboxPolicy through four hooks (see the
 Policy protocol in worker.py). Each rule of the subject lives in one
 of them:
 
-    check(tree) static, before running  -> imports
-    builtins()  what user code can call -> safe __import__
-    lock_down() irreversible, once      -> rlimits, audit hook
-    trusted()   worker-internal operations  -> pauses the audit hook
+    check(tree)  static, before running  -> imports, dunders, frames
+    builtins()   what user code can call -> safe __import__, open...
+    lock_down()  irreversible, once      -> limits.py, audit.py
+    trusted()    worker-internal code    -> nothing to pause (no-op)
 """
 
 from __future__ import annotations

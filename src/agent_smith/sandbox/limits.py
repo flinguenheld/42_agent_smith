@@ -1,4 +1,4 @@
-"""OS resources limits of the worker process (setrlimit)."""
+"""OS resource limits of the worker process (setrlimit)."""
 
 from __future__ import annotations
 
@@ -27,6 +27,6 @@ def apply_limits(max_memory_mb: int) -> None:
     _lower(resource.RLIMIT_FSIZE, MAX_FILE_BYTES)
     _lower(resource.RLIMIT_NOFILE, MAX_OPEN_FILES)
     _lower(resource.RLIMIT_CORE, 0)  # no core dump files
-    # over FSIZE, the kerner sends SIGXFSZ, which kills the process by default
+    # over FSIZE, the kernel sends SIGXFSZ, which kills the process by default
     # ignored, the write fails with OSError instead
     signal.signal(signal.SIGXFSZ, signal.SIG_IGN)

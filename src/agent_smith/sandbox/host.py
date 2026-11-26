@@ -15,9 +15,9 @@ from pathlib import Path
 from types import TracebackType
 from typing import IO, Any
 
-from . import protocol as p
-from .config import SandboxConfig
-from .result import ExecResult, Status, truncate
+from agent_smith.sandbox import protocol as p
+from agent_smith.sandbox.config import SandboxConfig
+from agent_smith.sandbox.result import ExecResult, Status, truncate
 
 ToolHandler = Callable[..., Any]
 
